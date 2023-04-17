@@ -537,7 +537,7 @@ Cell.prototype = {
 function newgame() {
 	if (grid) {
 		grid.stopTimer();
-		ids.timeTaken.innerHTML = '';
+		ids.timeTaken.innerHTML = '...';
 		grid.clearNbhdOverlays();
 	}
 	new Grid({
