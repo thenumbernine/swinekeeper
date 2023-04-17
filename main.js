@@ -208,14 +208,13 @@ window.grid = grid;
 			});
 			dom.addEventListener('mouseenter', e => {
 				if (!ids.hints.checked) return;
-				if (cell.hidden) return;
-				// option ... green overlay when all mines are marked?
-				let flags = 0;
-				cell.nbhdIter(cell2 => {
-					if (cell2.flag == 1) flags++;
-				});
-				const color = (flags == cell.numTouch) ? '#00ff00' : '#ff0000';
-				cell.nbhdIter(cell2 => {
+				
+				// properties for !cell.hidden
+				let color = '#ff0000';
+				let ignoreHidden = false;
+				
+				let highlightCallback = cell2 => {
+					if (ignoreHidden && cell2.hidden) return;
 					const overlay = document.createElement('div');
 					overlay.style.position = 'absolute';
 					const rect = cell2.dom.getBoundingClientRect();
@@ -226,10 +225,23 @@ window.grid = grid;
 					overlay.style.height = rect.width + 'px';
 					overlay.style.border = borderSize+'px solid '+color;
 					// option ... put overlays on revealed tiles? or just dimly on revealed tiles...
-					overlay.style.opacity = cell2.hidden ? .8 : .3;
+					overlay.style.opacity = ignoreHidden ? .5 : (cell2.hidden ? .8 : .3);
 					document.body.appendChild(overlay);
 					grid.nbhdOverlays.push(overlay);
-				});
+				};
+				if (!cell.hidden) { 
+					// option ... green overlay when all mines are marked?
+					let flags = 0;
+					cell.nbhdIter(cell2 => {
+						if (cell2.flag == 1) flags++;
+					});
+					if (flags == cell.numTouch) color = '#00ff00';
+					cell.nbhdIter(highlightCallback);
+				} else {
+					ignoreHidden = true;
+					cell.invNbhdCells.forEach(highlightCallback);
+				}
+				
 			});
 			dom.addEventListener('mouseleave', e => { grid.clearNbhdOverlays(); });
 			let nbhd = !nbhdFFA
@@ -248,15 +260,15 @@ window.grid = grid;
 
 	// now set random mines
 	this.notMineCells = this.allCells.slice();
-	const numMines = Math.ceil(this.notMineCells.length * parseFloat(ids.percentMines.value) / 100);
-	for (let i = 0; i < numMines; ++i) {
+	this.numMines = Math.ceil(this.notMineCells.length * parseFloat(ids.percentMines.value) / 100);
+	for (let i = 0; i < this.numMines; ++i) {
 		this.popRandomNonMineCell().mine = true;
 	}
-	this.minesMarked = numMines;
-	ids.minesleft.innerHTML = ''+grid.minesMarked;
+	this.minesUnmarked = this.numMines;
+	ids.minesleft.innerHTML = ''+grid.minesUnmarked;
 	
 	this.numHidden = this.width * this.height;
-	// refresh after setting numHidden and minesMarked
+	// refresh after setting numHidden and minesUnmarked
 	this.refreshUncoveredPercent();
 
 
@@ -324,7 +336,9 @@ Grid.prototype = {
 		this.nbhdOverlays = [];
 	},
 	refreshUncoveredPercent : function() {
-		const numRevealed = this.width * this.height - this.numHidden - this.minesMarked;
+		const numRevealed = this.width * this.height
+			- this.numHidden
+			- (this.numMines - this.minesUnmarked);
 		const percentUncovered = numRevealed / (this.width * this.height);
 		ids.percentUncovered.innerHTML = Math.floor(100*percentUncovered)+'%';
 	},
@@ -394,6 +408,7 @@ function Cell(args) {
 	this.flag = 0;
 }
 Cell.prototype = {
+	// used to build nbhdCells so don't depend on nbhdCells here ...
 	nbhdIter : function(f) {
 		this.nbhd.gridPtIter(this.pos, cell => {
 			f(cell);
@@ -444,11 +459,11 @@ Cell.prototype = {
 		// 0 = not marked
 		// 1 = certain
 		// 2 = uncertain
-		if (this.flag == 1) grid.minesMarked++;
+		if (this.flag == 1) grid.minesUnmarked++;
 		this.flag++;
 		this.flag %= 3;
-		if (this.flag == 1) grid.minesMarked--;
-		ids.minesleft.innerHTML = ''+grid.minesMarked;
+		if (this.flag == 1) grid.minesUnmarked--;
+		ids.minesleft.innerHTML = ''+grid.minesUnmarked;
 		this.dom.innerHTML = (['', 'F', '?'])[this.flag];
 		grid.refreshUncoveredPercent();
 	},
