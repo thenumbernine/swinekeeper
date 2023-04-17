@@ -191,6 +191,7 @@ function* cellIter() {
 
 function Cell(args) {
 	this.hidden = true;
+	this.flag = 0;
 }
 Cell.prototype = {
 	calculateNumTouch : function() {
