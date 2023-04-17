@@ -119,7 +119,16 @@ function createRandomNeighborhood(pos) {
 				const i = pos[0]+dx;
 				const j = pos[1]+dy;
 				if (i >= 0 && i < grid.width && j >= 0 && j < grid.height) {
-					n.push([dx,dy]);
+					let found = false;
+					n.forEach(dxy => {
+						if (dxy[0] == dx && dxy[1] == dy) {
+							found = true;
+							return true;
+						}
+					});
+					if (!found) {
+						n.push([dx,dy]);
+					}
 					break;
 				}
 			}
