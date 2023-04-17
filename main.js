@@ -242,11 +242,9 @@ window.grid = grid;
 			thiz.cells[i][j] = cell;
 		}
 	}
-
+	
 	// TODO set neighborhoods *here* afterwar cell has been assigned
 	// so we have cell.pos for the qg nbhd generator
-
-	this.setNumHidden(this.width * this.height);	// or todo i could count them ...
 
 	// now set random mines
 	this.notMineCells = this.allCells.slice();
@@ -254,8 +252,13 @@ window.grid = grid;
 	for (let i = 0; i < numMines; ++i) {
 		this.popRandomNonMineCell().mine = true;
 	}
-	grid.minesMarked = numMines;
+	this.minesMarked = numMines;
 	ids.minesleft.innerHTML = ''+grid.minesMarked;
+	
+	this.numHidden = this.width * this.height;
+	// refresh after setting numHidden and minesMarked
+	this.refreshUncoveredPercent();
+
 
 	// store nbhd cells
 	this.forEachCell(cell => {
@@ -320,9 +323,9 @@ Grid.prototype = {
 		});
 		this.nbhdOverlays = [];
 	},
-	setNumHidden : function(h) {
-		this.numHidden = h;
-		const percentUncovered = 1 - this.numHidden / (this.width * this.height);
+	refreshUncoveredPercent : function() {
+		const numRevealed = this.width * this.height - this.numHidden - this.minesMarked;
+		const percentUncovered = numRevealed / (this.width * this.height);
 		ids.percentUncovered.innerHTML = Math.floor(100*percentUncovered)+'%';
 	},
 	checkFirstClick : function(cell) {
@@ -363,6 +366,10 @@ Grid.prototype = {
 			// add the old cell to the not-mine list
 			this.notMineCells.push(cell);
 		}
+	},
+	stopTimer : function() {
+		if (this.timerInterval) clearInterval(this.timerInterval);
+		this.timerInterval = undefined;
 	},
 };
 
@@ -427,6 +434,7 @@ Cell.prototype = {
 			if (grid.notMineCells.length == 0) {
 				grid.gamedone = true;
 				ids.youwin.appendChild(document.createTextNode('YOU WIN'));
+				grid.stopTimer();
 			}
 		}
 	},
@@ -442,6 +450,7 @@ Cell.prototype = {
 		if (this.flag == 1) grid.minesMarked--;
 		ids.minesleft.innerHTML = ''+grid.minesMarked;
 		this.dom.innerHTML = (['', 'F', '?'])[this.flag];
+		grid.refreshUncoveredPercent();
 	},
 	show : function() {
 		if (!this.hidden) return;
@@ -472,7 +481,8 @@ Cell.prototype = {
 		}
 
 		this.hidden = false;
-		grid.setNumHidden(grid.numHidden-1);
+		grid.numHidden--;
+		grid.refreshUncoveredPercent();
 	},
 	// if a mine goes off we call this on all cells
 	revealMine : function() {
@@ -484,7 +494,7 @@ Cell.prototype = {
 function newgame() {
 	ids.youwin.innerHTML = '';
 	if (grid) {
-		clearInterval(grid.timerInterval);
+		grid.stopTimer();
 		ids.timeTaken.innerHTML = '';
 		grid.clearNbhdOverlays();
 	}
