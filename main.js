@@ -5,7 +5,7 @@ let cellSize = 24;
 
 const ids = {};
 [
-	'go', 'board', 'width', 'height', 'percentMines',
+	'go', 'board', 'width', 'height', 'percentMines', 'minesleft',
 	// nbhds:
 	'nbhd_4p', 'nbhd_4x', 'nbhd_8',
 ].forEach(f => {
@@ -113,6 +113,8 @@ window.grid = grid;
 	for (let i = 0; i < numMines; ++i) {
 		this.popRandomNonMineCell().mine = true;
 	}
+	grid.minesMarked = numMines;
+	ids.minesleft.innerHTML = ''+grid.minesMarked;
 	
 	// store nbhd cells
 	this.forEachCell(cell => {
@@ -246,8 +248,14 @@ Cell.prototype = {
 	},
 	setFlag : function() {
 		if (!this.hidden) return;
+		// 0 = not marked
+		// 1 = certain
+		// 2 = uncertain
+		if (this.flag == 1) grid.minesMarked++;
 		this.flag++;
 		this.flag %= 3;
+		if (this.flag == 1) grid.minesMarked--;
+		ids.minesleft.innerHTML = ''+grid.minesMarked;
 		this.dom.innerHTML = (['', 'F', '?'])[this.flag];
 	},
 	show : function() {
