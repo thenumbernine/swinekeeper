@@ -351,7 +351,7 @@ Cell.prototype = {
 		});
 	},
 	click : function() {
-		if (grid.won) return;
+		if (grid.gamedone) return;
 		if (this.flag) return;
 
 		if (!grid.clicked) {
@@ -376,6 +376,7 @@ Cell.prototype = {
 
 		if (!this.hidden) return;
 		if (this.mine) {
+			grid.gamedone = true;
 			grid.revealAllMines();
 			// and add a red overlay or something
 			this.dom.style.backgroundColor = '#ff0000';
@@ -393,13 +394,13 @@ Cell.prototype = {
 			const i = grid.notMineCells.indexOf(this);
 			grid.notMineCells.splice(i, 1);
 			if (grid.notMineCells.length == 0) {
-				grid.won = true;
+				grid.gamedone = true;
 				ids.youwin.appendChild(document.createTextNode('YOU WIN'));
 			}
 		}
 	},
 	setFlag : function() {
-		if (grid.won) return;
+		if (grid.gamedone) return;
 		if (!this.hidden) return;
 		// 0 = not marked
 		// 1 = certain
