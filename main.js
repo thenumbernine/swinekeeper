@@ -143,7 +143,7 @@ window.grid = grid;
 				... until we finally set a neighbor's neighborhood.
 		then with whatever cells haven't been assigned , give them random neighborhoods.
 	this will guaranteee that all cells are looked at by at least one cell
-	/*
+	*/
 
 	// now count neighboring mines
 	this.forEachCell(cell => cell.calculateNumTouch());
