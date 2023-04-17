@@ -1,7 +1,11 @@
 let grid;
 
+function posmod(x,y) {
+	return ((x % y) + y) % y;
+}
+
 const ids = {};
-['newgame', 'board', 'width', 'height', 'percentMines', 'minesleft', 'youwin', 'cellsize', 'nbhddiv', 'qgmode', 'hints', 'percentUncovered', 'timeTaken'].forEach(f => {
+['newgame', 'board', 'width', 'height', 'percentMines', 'minesleft', 'cellsize', 'nbhddiv', 'qgmode', 'hints', 'torus', 'percentUncovered', 'timeTaken'].forEach(f => {
 	ids[f] = document.getElementById(f);
 });
 window.ids = ids;
@@ -9,6 +13,9 @@ window.ids = ids;
 function changedConfig(e) {
 	if (!grid.clicked) newgame();
 }
+
+ids.qgmode.addEventListener('change', changedConfig);
+ids.torus.addEventListener('change', changedConfig);
 
 function Neighborhood(n, symbol, desc, checked) {
 	this.n = n;
@@ -34,8 +41,12 @@ Neighborhood.prototype = {
 	gridPtIter : function(ij,f) {
 		const [i,j] = ij;
 		this.iter((dx,dy) => {
-			const x = i+dx;
-			const y = j+dy;
+			let x = i+dx;
+			let y = j+dy;
+			if (grid.torus) {
+				x = posmod(x, grid.width);
+				y = posmod(y, grid.height);
+			}
 			if (x >= 0 &&
 				x < grid.width &&
 				y >= 0 &&
@@ -108,8 +119,6 @@ const nbhds = [
 ];
 window.nbhds = nbhds;
 
-ids.qgmode.addEventListener('change', changedConfig);
-
 function createRandomNeighborhood(pos) {
 	const n = [];
 	//size?
@@ -128,8 +137,12 @@ function createRandomNeighborhood(pos) {
 			const dx = Math.floor(r * Math.cos(th));
 			const dy = Math.floor(r * Math.sin(th));
 			if (!(dx == 0 && dy == 0)) {
-				const i = pos[0]+dx;
-				const j = pos[1]+dy;
+				let i = pos[0]+dx;
+				let j = pos[1]+dy;
+				if (grid.torus) {
+					i = posmod(i, grid.width);
+					j = posmod(j, grid.height);
+				}
 				if (i >= 0 && i < grid.width && j >= 0 && j < grid.height) {
 					let found = false;
 					n.forEach(dxy => {
@@ -164,6 +177,7 @@ window.grid = grid;
 
 	ids.board.innerHTML = '';
 
+	this.torus = ids.torus.checked;
 
 	this.cells = [];
 	for (let i = 0; i < this.width; ++i) {
@@ -320,13 +334,18 @@ Grid.prototype = {
 			});
 		});
 	},
-	revealAllMines : function() {
+	// if a mine goes off we call this on all cells
+	revealAllMinesUponFailure : function() {
 		/* not iterators */
-		this.forEachCell(cell => cell.revealMine());
+		this.forEachCell(cell => {
+			if (!cell.hidden) return;
+			if (cell.mine) cell.show(true);
+		});
 		/**/
 		/* iterators?
 		for (cell in cellIter()) {
-			cell.show();
+			if (!cell.hidden) return;
+			if (cell.mine) cell.show();
 		}
 		*/
 	},
@@ -386,6 +405,10 @@ Grid.prototype = {
 		if (this.timerInterval) clearInterval(this.timerInterval);
 		this.timerInterval = undefined;
 	},
+	stopGame : function() {
+		this.gamedone = true;
+		this.stopTimer();
+	},
 };
 
 //iterators?
@@ -430,8 +453,8 @@ Cell.prototype = {
 
 		if (!this.hidden) return;
 		if (this.mine) {
-			grid.gamedone = true;
-			grid.revealAllMines();
+			grid.stopGame();
+			grid.revealAllMinesUponFailure();
 			// and add a red overlay or something
 			this.dom.style.backgroundColor = '#ff0000';
 		} else {
@@ -448,9 +471,8 @@ Cell.prototype = {
 			const i = grid.notMineCells.indexOf(this);
 			grid.notMineCells.splice(i, 1);
 			if (grid.notMineCells.length == 0) {
-				grid.gamedone = true;
-				ids.youwin.appendChild(document.createTextNode('YOU WIN'));
-				grid.stopTimer();
+				grid.stopGame();
+				ids.timeTaken.appendChild(document.createTextNode(' YOU WIN'));
 			}
 		}
 	},
@@ -468,7 +490,7 @@ Cell.prototype = {
 		this.dom.innerHTML = (['', 'F', '?'])[this.flag];
 		grid.refreshUncoveredPercent();
 	},
-	show : function() {
+	show : function(dontChangeUncovered) {
 		if (!this.hidden) return;
 		let text = this.nbhd.symbol;
 		this.dom.style.backgroundColor = '#dfdfdf';
@@ -498,17 +520,13 @@ Cell.prototype = {
 
 		this.hidden = false;
 		grid.numHidden--;
-		grid.refreshUncoveredPercent();
+		if (!dontChangeUncovered) {
+			grid.refreshUncoveredPercent();
+		}
 	},
-	// if a mine goes off we call this on all cells
-	revealMine : function() {
-		if (!this.hidden) return;
-		if (this.mine) this.show();
-	}
 };
 
 function newgame() {
-	ids.youwin.innerHTML = '';
 	if (grid) {
 		grid.stopTimer();
 		ids.timeTaken.innerHTML = '';
