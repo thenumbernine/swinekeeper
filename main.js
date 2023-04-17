@@ -146,12 +146,7 @@ window.grid = grid;
 					grid.nbhdOverlays.push(overlay);
 				});
 			});
-			dom.addEventListener('mouseleave', e => {
-				grid.nbhdOverlays.forEach(o => {
-					o.parentNode.removeChild(o);
-				});
-				grid.nbhdOverlays = [];
-			});
+			dom.addEventListener('mouseleave', e => { grid.clearNbhdOverlays(); });
 			let nbhd = pickRandom(allowedNbhds);
 			cell.nbhd = nbhd;
 			if (!cell.nbhd) throw "couldn't find nbhd "+nbhd;
@@ -225,6 +220,12 @@ Grid.prototype = {
 			cell.show();
 		}
 		*/
+	},
+	clearNbhdOverlays : function() {
+		this.nbhdOverlays.forEach(o => {
+			o.parentNode.removeChild(o);
+		});
+		this.nbhdOverlays = [];
 	},
 };
 
@@ -348,6 +349,7 @@ Cell.prototype = {
 };
 
 function newgame() {
+	if (grid) grid.clearNbhdOverlays();
 	new Grid({
 		size : [
 			parseInt(ids.width.value),
