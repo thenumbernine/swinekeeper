@@ -5,8 +5,8 @@
 		<title>SwineKeeper</title>
 		<script type='module' src='main.js' defer></script>
 	</head>
-	<body>
-
+	<body style='overflow:scroll'>
+	
 	<div style='float:right; width:40%; text-align:right'>
 	neighborhoods (req new game):<br>
 	<div id='nbhddiv' style='overflow-x:hidden; overflow-y:scroll; height:6em'>
@@ -17,13 +17,15 @@
 	width <input id='width' type='text' value='30'/><br>
 	height <input id='height' type='text' value='20'/><br>
 	percent mines <input id='percentMines' type='text' value='15'/><br>
+	cell size <input id='cellsize' type='text' value='24'/><br>
+	QUANTUM GRAVITY MODE <input id='qgmode' type='checkbox'/><br>
 	<br>
 
 	<button id='newgame'>New Game</button><br>
 	<div style='text-align:center'>Mines Left: <span id='minesleft'></span></div>
 	<br>
 
-	<table id='board' cellspacing='0' style='margin:auto'></table>
+	<table id='board' cellpadding='0' cellspacing='0' style='margin:auto; table-layout:fixed'></table>
 	<div id='youwin'></div>
 	
 	</body>

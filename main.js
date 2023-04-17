@@ -1,13 +1,7 @@
 let grid;
 
-// TODO base on document size
-let cellSize = 24;
-
 const ids = {};
-[
-	'newgame', 'board', 'width', 'height', 'percentMines', 'minesleft', 'youwin',
-	'nbhddiv',
-].forEach(f => {
+['newgame', 'board', 'width', 'height', 'percentMines', 'minesleft', 'youwin', 'cellsize', 'nbhddiv', 'qgmode'].forEach(f => {
 	ids[f] = document.getElementById(f);
 });
 window.ids = ids;
@@ -104,6 +98,36 @@ const nbhds = [
 ];
 window.nbhds = nbhds;
 
+function createRandomNeighborhood(pos) {
+	const n = [];
+	//size?
+	//hmm, nbhd size ... 
+	// 1, 2 = too small
+	// 4 = small but good
+	// 8 = ideal
+	// 24 = big but good
+	const size = parseInt(Math.random() * 20) + 1;
+
+	for (let i = 0; i < size; ++i) {
+		for (let tries=0; tries<100; ++tries) {
+			// another way to do this: put all cells in an array, assign weight according to their inv dist, then pick by weight
+			const r = 1/(1 - Math.random() * (1 - 1/Math.max(grid.width, grid.height)));
+			const th = Math.random() * 2 * Math.PI;
+			const dx = Math.floor(r * Math.cos(th));
+			const dy = Math.floor(r * Math.sin(th));
+			if (!(dx == 0 && dy == 0)) {
+				const i = pos[0]+dx;
+				const j = pos[1]+dy;
+				if (i >= 0 && i < grid.width && j >= 0 && j < grid.height) {
+					n.push([dx,dy]);
+					break;
+				}
+			}
+		}
+	}
+	return new Neighborhood('', '', false, n);
+}
+
 function pickRandom(ar) {
 	return ar[parseInt(Math.random() * ar.length)];
 }
@@ -119,21 +143,27 @@ window.grid = grid;
 
 	ids.board.innerHTML = '';
 
-	this.notMineCells = [];
 
 	this.cells = [];
 	for (let i = 0; i < this.width; ++i) {
 		this.cells[i] = [];
 	}
 
+	const nbhdFFA = ids.qgmode.checked;
+
 	let allowedNbhds = [];
 	nbhds.forEach(n => {
 		if (n.input.checked) allowedNbhds.push(n);
 	});
-	if (!allowedNbhds.length) throw "can't play without any allowed nbhds";
+	if (!nbhdFFA && !allowedNbhds.length) throw "can't play without any allowed nbhds";
 
+	const cellSize = parseInt(ids.cellsize.value);
+
+	this.allCells = [];
+	ids.board.style.width = (this.width * cellSize)+'px';
 	for (let j = this.height-1; j >= 0; --j) {
 		const tr = document.createElement('tr');
+		tr.style.width = (this.width * cellSize) + 'px';
 		ids.board.appendChild(tr);
 		for (let i = 0; i < this.width; ++i) {
 			const dom = document.createElement('td');
@@ -147,6 +177,8 @@ window.grid = grid;
 			dom.style.margin = '0px';
 			dom.style.textAlign = 'center';
 			dom.style.backgroundColor = '#9f9f9f';
+			dom.style.overflow = 'hidden';
+			dom.style.whitespace = 'nowrap';
 			dom.style.cursor = 'default';
 			dom.addEventListener('click', e => { cell.click(); });
 			dom.addEventListener('contextmenu', e => {
@@ -155,8 +187,13 @@ window.grid = grid;
 			});
 			dom.addEventListener('mouseenter', e => {
 				if (cell.hidden) return;
+				// option ... green overlay when all mines are marked?
+				let flags = 0;
 				cell.nbhdIter(cell2 => {
-					// option ... put overlays on revealed tiles?
+					if (cell2.flag == 1) flags++;
+				});
+				const color = (flags == cell.numTouch) ? '#00ff00' : '#ff0000';
+				cell.nbhdIter(cell2 => {
 					const overlay = document.createElement('div');
 					overlay.style.position = 'absolute';
 					const rect = cell2.dom.getBoundingClientRect();
@@ -165,23 +202,27 @@ window.grid = grid;
 					overlay.style.top = (rect.y + window.scrollY - borderSize) + 'px';
 					overlay.style.width = rect.width + 'px';
 					overlay.style.height = rect.width + 'px';
-					overlay.style.border = borderSize+'px solid #ff0000';
+					overlay.style.border = borderSize+'px solid '+color;
+					// option ... put overlays on revealed tiles? or just dimly on revealed tiles...
 					overlay.style.opacity = cell2.hidden ? .8 : .3;
 					document.body.appendChild(overlay);
 					grid.nbhdOverlays.push(overlay);
 				});
 			});
 			dom.addEventListener('mouseleave', e => { grid.clearNbhdOverlays(); });
-			let nbhd = pickRandom(allowedNbhds);
+			let nbhd = !nbhdFFA
+				? pickRandom(allowedNbhds)
+				: createRandomNeighborhood(cell.pos);
 			cell.nbhd = nbhd;
 			if (!cell.nbhd) throw "couldn't find nbhd "+nbhd;
 			tr.appendChild(dom);
-			thiz.notMineCells.push(cell);
+			thiz.allCells.push(cell);
 			thiz.cells[i][j] = cell;
 		}
 	}
 
 	// now set random mines
+	this.notMineCells = this.allCells.slice();
 	const numMines = Math.ceil(this.notMineCells.length * parseFloat(ids.percentMines.value) / 100);
 	for (let i = 0; i < numMines; ++i) {
 		this.popRandomNonMineCell().mine = true;
