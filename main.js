@@ -1,7 +1,7 @@
 let grid;
 
 const ids = {};
-['newgame', 'board', 'width', 'height', 'percentMines', 'minesleft', 'youwin', 'cellsize', 'nbhddiv', 'qgmode'].forEach(f => {
+['newgame', 'board', 'width', 'height', 'percentMines', 'minesleft', 'youwin', 'cellsize', 'nbhddiv', 'qgmode', 'hints'].forEach(f => {
 	ids[f] = document.getElementById(f);
 });
 window.ids = ids;
@@ -207,6 +207,7 @@ window.grid = grid;
 				e.preventDefault();
 			});
 			dom.addEventListener('mouseenter', e => {
+				if (!ids.hints.checked) return;
 				if (cell.hidden) return;
 				// option ... green overlay when all mines are marked?
 				let flags = 0;
