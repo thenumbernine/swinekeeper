@@ -238,6 +238,7 @@ window.grid = grid;
 					if (flags == cell.numTouch) color = '#00ff00';
 					cell.nbhdIter(highlightCallback);
 				} else {
+					color = '#ffff00';
 					ignoreHidden = true;
 					cell.invNbhdCells.forEach(highlightCallback);
 				}
