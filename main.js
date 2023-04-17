@@ -66,18 +66,25 @@ function Grid(args) {
 window.grid = grid;
 	const thiz = this;
 	this.clicked = false;
+	this.nbhdOverlays = [];
+
 	[this.width, this.height] = args.size;
+	
 	ids.board.innerHTML = '';
+	
 	this.notMineCells = [];
+	
 	this.cells = [];
 	for (let i = 0; i < this.width; ++i) {
 		this.cells[i] = [];
 	}
+	
 	let allowedNbhds = [];
 	nbhdKeys.forEach(k => {
 		if (ids['nbhd'+k].checked) allowedNbhds.push(k);
 	});
 	if (!allowedNbhds.length) throw "can't play without any allowed nbhds";
+	
 	for (let j = 0; j < this.height; ++j) {
 		const tr = document.createElement('tr');
 		ids.board.appendChild(tr);
@@ -92,12 +99,35 @@ window.grid = grid;
 			dom.style.padding = '0px';
 			dom.style.margin = '0px';
 			dom.style.textAlign = 'center';
-			dom.style.backgroundColor = 'grey';
+			dom.style.backgroundColor = '#9f9f9f';
 			dom.style.cursor = 'default';
 			dom.addEventListener('click', e => { cell.click(); });
 			dom.addEventListener('contextmenu', e => { 
 				cell.setFlag();
 				e.preventDefault();
+			});
+			dom.addEventListener('mouseenter', e => {
+				if (cell.hidden) return;
+				cell.nbhdIter(cell2 => {
+					const overlay = document.createElement('div');
+					overlay.style.position = 'absolute';
+					const rect = cell2.dom.getBoundingClientRect();
+					const borderSize = 3;
+					overlay.style.left = (rect.x + window.scrollX - borderSize) + 'px';
+					overlay.style.top = (rect.y + window.scrollY - borderSize) + 'px';
+					overlay.style.width = rect.width + 'px';
+					overlay.style.height = rect.width + 'px';
+					overlay.style.border = borderSize+'px solid #ff0000';
+					overlay.style.opacity = .8;
+					document.body.appendChild(overlay);
+					grid.nbhdOverlays.push(overlay);
+				});
+			});
+			dom.addEventListener('mouseleave', e => {
+				grid.nbhdOverlays.forEach(o => {
+					o.parentNode.removeChild(o);
+				});
+				grid.nbhdOverlays = [];
 			});
 			let nbhdType = pickRandom(allowedNbhds);
 			cell.nbhd = neighborhoods[nbhdType];
@@ -119,7 +149,7 @@ window.grid = grid;
 	// store nbhd cells
 	this.forEachCell(cell => {
 		cell.nbhdCells = [];
-		cell.nbhd.gridPtIter(cell.pos, cell2 => {
+		cell.nbhdIter(cell2 => {
 			cell.nbhdCells.push(cell2);
 		});
 	});
@@ -196,8 +226,13 @@ function Cell(args) {
 	this.flag = 0;
 }
 Cell.prototype = {
+	nbhdIter : function(f) {
+		this.nbhd.gridPtIter(this.pos, cell => {
+			f(cell);
+		});
+	},
 	calculateNumTouch : function() {
-		var thiz = this;
+		let thiz = this;
 		this.numTouch = 0;
 		this.nbhdCells.forEach(cell => {
 			if (cell.mine) thiz.numTouch++;
@@ -227,7 +262,7 @@ Cell.prototype = {
 		if (this.mine) {
 			grid.showAll();
 			// and add a red overlay or something
-			this.dom.style.backgroundColor = 'red';
+			this.dom.style.backgroundColor = '#ff0000';
 		} else {
 			this.show();
 			if (this.numTouch == 0) {
@@ -261,7 +296,7 @@ Cell.prototype = {
 	show : function() {
 		if (!this.hidden) return;
 		let text = this.nbhd.symbol;
-		this.dom.style.backgroundColor = '#cfcfcf';
+		this.dom.style.backgroundColor = '#dfdfdf';
 		if (this.mine) {
 			text = '*';
 		} else if (this.numTouch > 0) {
