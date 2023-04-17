@@ -130,7 +130,21 @@ window.grid = grid;
 			cell2.invNbhdCells.push(cell);
 		});
 	});
-	
+	/* TODO if any cel's invNbhdCells is zero then that means no other cell indicates what this cell is
+	  and you should probably re-roll some of its neighbors until that changes.
+	 another method could be to do this:
+	 	for each cell
+			if no neighbors are looking at it yet:
+				repeat
+					pick a random enabled neighborhood pattern
+						pick an inverse (pick a offset in the nbhd, place that at the cell, look at the nbhd origin)
+							if that neighbor hasn't been assigned a neighborhood
+							then set that neighboring cell to that neighborhood.
+				... until we finally set a neighbor's neighborhood.
+		then with whatever cells haven't been assigned , give them random neighborhoods.
+	this will guaranteee that all cells are looked at by at least one cell
+	/*
+
 	// now count neighboring mines
 	this.forEachCell(cell => cell.calculateNumTouch());
 }
@@ -187,7 +201,7 @@ Cell.prototype = {
 		});
 	},
 	click : function() {
-		if (grid.flag) return;
+		if (this.flag) return;
 		
 		if (!grid.clicked) {
 			grid.clicked = true;
@@ -231,13 +245,9 @@ Cell.prototype = {
 	},
 	setFlag : function() {
 		if (!this.hidden) return;
-		if (this.flag) {
-			this.flag = false;
-			this.dom.innerHTML = '';
-		} else {
-			this.flag = true;
-			this.dom.innerHTML = 'F';
-		}
+		this.flag++;
+		this.flag %= 3;
+		this.dom.innerHTML = (['', 'F', '?'])[this.flag];
 	},
 	show : function() {
 		if (!this.hidden) return;
