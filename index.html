@@ -13,6 +13,74 @@
 	</div>
 	</div>
 
+	<input id='help' type='checkbox'/> Show Help<br>
+	<div id='helpdiv' style='display:none; border:1px solid black; margin:3px; padding:3px; width:55%'>
+		HELP:<br>
+		This is just like original minesweeper but with varying detection neighborhoods.<Br>
+		<br>
+		
+		ORIGINAL MINESWEEPER HELP:<br>
+		<Br>
+
+		In the original minesweeper, you click tiles to reveal whether they have mines underneath them or not.<br>
+		If they do, and you click them, you die, game over.<br>
+		If they don't, then they will reveal a number.<br>
+		The number will tell you how many mines are surrounding the tile you clicked,
+		i.e. the number of mines in the 3x3 neighborhood around the tile.<br>
+		You could think of the tile as having a mine detector that was a 3x3 neighborhood around the tile.<br>
+		<br>
+
+		You are also able to flag tiles as potential mines using the right-click button.<Br>
+		<Br>
+
+		You win the game when you reveal all the tiles that don't have mines under them.<br>
+		<br>
+
+		<hr>
+		<br>
+
+		SWINEKEEPER:<br>
+		<br>
+
+		In this version the tiles will have arbitrary neighborhoods.<br>
+		You can choose on the right column under 'neighborhoods' which possible neighborhoods to allow.<br>
+		If you uncheck all of them except the '3x3' option then you will get original minesweeper.<br>
+		<br>
+		
+		<hr>
+		<br>
+
+		Now when you open a tile, it will tell you first the number of mines next to it, and next the letter indicating what kind of neighborhood it is using to detect the mines.<br>
+		The 'neighborhoods' legend in the upper-right will show you what each of the letters mean.<br>
+		<br>
+		
+		<hr>
+		<br>
+
+		If you check the 'hints' checkbox then you'll get some help:<br>
+		<br>
+
+		When you mouse-over a revealed tile, it will show you highlights over all the other tiles in its neighborhood which it detected.<br>
+		If this matches the number of flags around it then the highlight will be green, indicating all other unflagged un-revealed tiles are safe to check (presuming your flagged mines are in the right place).<br>
+		Otherwise the highlight will be red, indicating that the unchecked neighbors are still potentially unsafe.<br>
+		<br>
+
+		When you mouse-over a hidden tile, it will show you highlights over all the revealed tiles which have this tile in their neighborhoods.<br>
+		You can then mouse over those revealed tiles and see if any have a complete set of mines flagged.<br>
+		<br>
+
+		<hr>
+		<br>
+		
+		If you check the 'QUANTUM GRAVITY MODE' checkbox then every single tile will have a completely random neighborhood.<br>
+		You are going to want to play with hints enabled.
+
+		<hr>
+		<br>
+
+		Torus mode just means that the neighborhoods of the tiles wraps around the left/right and top/bottom of the board.<br>
+		<Br>
+	</div>
 
 	<input id='width' type='text' value='30'/> width<br>
 	<input id='height' type='text' value='20'/> height<br>

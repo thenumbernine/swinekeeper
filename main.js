@@ -5,7 +5,7 @@ function posmod(x,y) {
 }
 
 const ids = {};
-['newgame', 'board', 'width', 'height', 'percentMines', 'minesleft', 'cellsize', 'nbhddiv', 'qgmode', 'hints', 'torus', 'percentUncovered', 'timeTaken'].forEach(f => {
+['newgame', 'board', 'width', 'height', 'percentMines', 'minesleft', 'cellsize', 'nbhddiv', 'qgmode', 'hints', 'torus', 'percentUncovered', 'timeTaken', 'help', 'helpdiv'].forEach(f => {
 	ids[f] = document.getElementById(f);
 });
 window.ids = ids;
@@ -16,6 +16,14 @@ function changedConfig(e) {
 
 ids.qgmode.addEventListener('change', changedConfig);
 ids.torus.addEventListener('change', changedConfig);
+
+ids.help.addEventListener('change', e => {
+	if (ids.helpdiv.style.display == 'none') {
+		ids.helpdiv.style.display = 'block';
+	} else {
+		ids.helpdiv.style.display = 'none';
+	}
+});
 
 function Neighborhood(n, symbol, desc, checked) {
 	this.n = n;
@@ -61,7 +69,7 @@ const nbhds = [
 	new Neighborhood([
 		[1,0],[-1,0],[0,1],[0,-1],
 		[1,1],[1,-1],[-1,1],[-1,-1]
-	], 'o', 'L-inf=1', true),
+	], 'o', '3x3', true),
 	new Neighborhood([[1,0],[-1,0],[0,1],[0,-1]], '+', 'cardinal', true),
 	new Neighborhood([[1,1],[1,-1],[-1,1],[-1,-1]], 'x', 'diagonal', true),
 
@@ -114,7 +122,7 @@ const nbhds = [
 			}
 			return n;
 		})(),
-		'O', 'L-inf=2', true
+		'O', '5x5', true
 	),
 ];
 window.nbhds = nbhds;
