@@ -6,17 +6,24 @@ const ids = {};
 });
 window.ids = ids;
 
-function Neighborhood(symbol, desc, checked, n) {
-	this.symbol = symbol;
-	this.desc = desc;
-	this.n = n;
+function changedConfig(e) {
+	if (!grid.clicked) newgame();
+}
 
-	this.input = document.createElement('input');
-	this.input.type = 'checkbox';
-	this.input.checked = checked;
-	ids.nbhddiv.appendChild(document.createTextNode('('+this.desc+') '+this.symbol));
-	ids.nbhddiv.appendChild(this.input);
-	ids.nbhddiv.appendChild(document.createElement('br'));
+function Neighborhood(n, symbol, desc, checked) {
+	this.n = n;
+	this.symbol = symbol || '';
+	// default neighborhoods (not the QG ones)
+	if (desc) {
+		this.desc = desc;
+		this.input = document.createElement('input');
+		this.input.type = 'checkbox';
+		this.input.checked = checked;
+		this.input.addEventListener('change', changedConfig);
+		ids.nbhddiv.appendChild(document.createTextNode('('+this.desc+') '+this.symbol));
+		ids.nbhddiv.appendChild(this.input);
+		ids.nbhddiv.appendChild(document.createElement('br'));
+	}
 }
 Neighborhood.prototype = {
 	iter : function(f) {
@@ -40,25 +47,25 @@ Neighborhood.prototype = {
 	},
 };
 const nbhds = [
-	new Neighborhood('o', 'L-inf=1', true, [
+	new Neighborhood([
 		[1,0],[-1,0],[0,1],[0,-1],
 		[1,1],[1,-1],[-1,1],[-1,-1]
-	]),
-	new Neighborhood('+', 'cardinal', true, [[1,0],[-1,0],[0,1],[0,-1]]),
-	new Neighborhood('x', 'diagonal', true, [[1,1],[1,-1],[-1,1],[-1,-1]]),
+	], 'o', 'L-inf=1', true),
+	new Neighborhood([[1,0],[-1,0],[0,1],[0,-1]], '+', 'cardinal', true),
+	new Neighborhood([[1,1],[1,-1],[-1,1],[-1,-1]], 'x', 'diagonal', true),
 
-	new Neighborhood('ul', 'up left', false, [[-1,1]]),
-	new Neighborhood('ur', 'up right', false, [[1,1]]),
-	new Neighborhood('dl', 'down left', false, [[-1,-1]]),
-	new Neighborhood('dr', 'down right', false, [[1,-1]]),
+	new Neighborhood([[-1,1]], 'ul', 'up left', false),
+	new Neighborhood([[1,1]], 'ur', 'up right', false),
+	new Neighborhood([[-1,-1]], 'dl', 'down left', false),
+	new Neighborhood([[1,-1]], 'dr', 'down right', false),
 
-	new Neighborhood('u', 'up', false, [[0,1]]),
-	new Neighborhood('d', 'down', false, [[0,-1]]),
-	new Neighborhood('l', 'left', false, [[-1,0]]),
-	new Neighborhood('r', 'right', false, [[1,0]]),
+	new Neighborhood([[0,1]], 'u', 'up', false),
+	new Neighborhood([[0,-1]], 'd', 'down', false),
+	new Neighborhood([[-1,0]], 'l', 'left', false),
+	new Neighborhood([[1,0]], 'r', 'right', false),
 
 	// TODO how about all possible combinations of L-inf=1, 2, etc ?
-	new Neighborhood('X', 'diagonal-2', true,
+	new Neighborhood(
 		(()=>{
 			const n = [];
 			for (let i = 1; i <= 2; ++i) {
@@ -68,9 +75,10 @@ const nbhds = [
 				n.push([-i,-i]);
 			}
 			return n;
-		})()
+		})(),
+		'X', 'diagonal-2', true
 	),
-	new Neighborhood('P', 'cardinal-2', true,
+	new Neighborhood(
 		(()=>{
 			const n = [];
 			for (let i = 1; i <= 2; ++i) {
@@ -80,9 +88,10 @@ const nbhds = [
 				n.push([-i,0]);
 			}
 			return n;
-		})()
+		})(),
+		'P', 'cardinal-2', true
 	),
-	new Neighborhood('O', 'L-inf=2', true,
+	new Neighborhood(
 		(()=>{
 			const n = [];
 			for (let dx = -2; dx <= 2; ++dx) {
@@ -93,10 +102,13 @@ const nbhds = [
 				}
 			}
 			return n;
-		})()
+		})(),
+		'O', 'L-inf=2', true
 	),
 ];
 window.nbhds = nbhds;
+
+ids.qgmode.addEventListener('change', changedConfig);
 
 function createRandomNeighborhood(pos) {
 	const n = [];
@@ -134,7 +146,7 @@ function createRandomNeighborhood(pos) {
 			}
 		}
 	}
-	return new Neighborhood('', '', false, n);
+	return new Neighborhood(n);
 }
 
 function pickRandom(ar) {
