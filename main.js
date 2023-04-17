@@ -3,17 +3,41 @@ let grid;
 // TODO base on document size
 let cellSize = 24;
 
-let ids = {};
+const ids = {};
 ['go', 'board', 'width', 'height', 'percentMines'].forEach(f => {
 	ids[f] = document.getElementById(f);
 });
 
+function Neighborhood(n) {
+	this.n = n;
+}
+Neighborhood.prototype = {
+	iter : function(f) {
+		this.n.forEach(dxy => {
+			f.apply(null, dxy);
+		});
+	},
+};
+
+const neighborhoods = {
+	_8x8 : new Neighborhood((() => {
+		const n = [];
+		for (let dx = -1; dx <= 1; ++dx) {
+			for (let dy = -1; dy <= 1; ++dy) {
+				if (!(dx == 0 && dy == 0)) {
+					n.push([dx,dy]);
+				}
+			}
+		}
+		return n;
+	})()),
+};
+
 function Grid(args) {
 	grid = this;	//assign here so ctor calls can access 'grid'
-	let thiz = this;
+	const thiz = this;
 	this.clicked = false;
-	this.width = args.size[0];
-	this.height = args.size[1];
+	[this.width, this.height] = args.size;
 	ids.board.innerHTML = '';
 	this.notMineCells = [];
 	this.cells = [];
@@ -21,11 +45,11 @@ function Grid(args) {
 		this.cells[i] = [];
 	}
 	for (let j = 0; j < this.height; ++j) {
-		let tr = document.createElement('tr');
+		const tr = document.createElement('tr');
 		ids.board.appendChild(tr);
 		for (let i = 0; i < this.width; ++i) {
-			let dom = document.createElement('td');
-			let cell = new Cell();
+			const dom = document.createElement('td');
+			const cell = new Cell();
 			cell.pos = [i,j];
 			cell.dom = dom;
 			dom.style.width = cellSize + 'px';
@@ -41,6 +65,7 @@ function Grid(args) {
 				cell.setFlag();
 				e.preventDefault();
 			});
+			cell.nbhd = neighborhoods._8x8;
 			tr.appendChild(dom);
 			thiz.notMineCells.push(cell);
 			thiz.cells[i][j] = cell;
@@ -48,10 +73,9 @@ function Grid(args) {
 	}
 	
 	// now set random mines
-	let numMines = Math.ceil(this.notMineCells.length * parseFloat(ids.percentMines.value) / 100);
+	const numMines = Math.ceil(this.notMineCells.length * parseFloat(ids.percentMines.value) / 100);
 	for (let i = 0; i < numMines; ++i) {
-		let cell = this.popRandomNonMineCell();
-		cell.mine = true;
+		this.popRandomNonMineCell().mine = true;
 	}
 	// now count neighboring mines
 	this.forEachCell(cell => cell.calculateNumTouch());
@@ -102,28 +126,25 @@ function Cell(args) {
 }
 Cell.prototype = {
 	nbhdIter : function(f) {
-		let i = this.pos[0];
-		let j = this.pos[1];
-		for (let dx = -1; dx <= 1; ++dx) {
-			for (let dy = -1; dy <= 1; ++dy) {
-				let x = i+dx;
-				let y = j+dy;
-				if (x >= 0 &&
-					x < grid.width &&
-					y >= 0 &&
-					y < grid.height
-				) {
-					f(grid.cells[x][y], dx, dy);
-				}
+		const [i, j] = this.pos;
+		this.nbhd.iter((dx,dy) => {
+			const x = i+dx;
+			const y = j+dy;
+			if (x >= 0 &&
+				x < grid.width &&
+				y >= 0 &&
+				y < grid.height
+			) {
+				f(grid.cells[x][y], dx, dy);
 			}
-		}
+		});
 	},
 	calculateNumTouch : function() {
-		let numTouch = 0;
+		var thiz = this;
+		this.numTouch = 0;
 		this.nbhdIter(cell => {
-			if (cell.mine) numTouch++;
+			if (cell.mine) thiz.numTouch++;
 		});
-		this.numTouch = numTouch;
 	},
 	click : function() {
 		if (grid.flag) return;
@@ -132,8 +153,9 @@ Cell.prototype = {
 			grid.clicked = true;
 			if (this.mine) {
 				this.mine = false;
-				let newmine = grid.popRandomNonMineCell();
+				const newmine = grid.popRandomNonMineCell();
 				newmine.mine = true;
+				// update
 				this.nbhdIter(cell => {
 					cell.calculateNumTouch();
 				});
@@ -160,7 +182,7 @@ Cell.prototype = {
 			}
 	
 			// remove from the non-mine cells
-			let i = grid.notMineCells.indexOf(this);
+			const i = grid.notMineCells.indexOf(this);
 			grid.notMineCells.splice(i, 1);
 			if (grid.notMineCells.length == 0) {
 				document.body.appendChild(document.createTextNode('YOU WIN'));
@@ -179,13 +201,13 @@ Cell.prototype = {
 	},
 	show : function() {
 		if (!this.hidden) return;
-		let text;
+		let text = '';
 		this.dom.style.backgroundColor = '#cfcfcf';
 		if (this.mine) {
 			text = '*';
 		} else if (this.numTouch > 0) {
 			text = this.numTouch;
-			var colors = [
+			const colors = [
 				'#7fff7f',
 				'#ffff7f',
 				'#ff7f7f',
@@ -208,14 +230,14 @@ Cell.prototype = {
 	},
 };
 
-let go = () => {
+function go() {
 	new Grid({
 		size : [
 			parseInt(ids.width.value),
 			parseInt(ids.height.value),
 		],
 	});
-};
+}
 
 ids.go.addEventListener('click', go);
 
