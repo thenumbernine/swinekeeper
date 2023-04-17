@@ -132,6 +132,7 @@ window.grid = grid;
 			dom.addEventListener('mouseenter', e => {
 				if (cell.hidden) return;
 				cell.nbhdIter(cell2 => {
+					// option ... put overlays on revealed tiles?
 					const overlay = document.createElement('div');
 					overlay.style.position = 'absolute';
 					const rect = cell2.dom.getBoundingClientRect();
@@ -141,7 +142,7 @@ window.grid = grid;
 					overlay.style.width = rect.width + 'px';
 					overlay.style.height = rect.width + 'px';
 					overlay.style.border = borderSize+'px solid #ff0000';
-					overlay.style.opacity = .8;
+					overlay.style.opacity = cell2.hidden ? .8 : .3;
 					document.body.appendChild(overlay);
 					grid.nbhdOverlays.push(overlay);
 				});
