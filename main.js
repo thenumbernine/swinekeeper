@@ -211,9 +211,9 @@ Grid.prototype = {
 			});
 		});
 	},
-	showAll : function() {
+	revealAllMines : function() {
 		/* not iterators */
-		this.forEachCell(cell => cell.show());
+		this.forEachCell(cell => cell.revealMine());
 		/**/
 		/* iterators?
 		for (cell in cellIter()) {
@@ -272,19 +272,22 @@ Cell.prototype = {
 				const newmine = grid.popRandomNonMineCell();
 				newmine.mine = true;
 				// update
-				this.nbhdCells.forEach(cell => {
+				this.calculateNumTouch();
+				newmine.calculateNumTouch();
+				this.invNbhdCells.forEach(cell => {
 					cell.calculateNumTouch();
 				});
-				newmine.nbhdCells.forEach(cell => {
+				newmine.invNbhdCells.forEach(cell => {
 					cell.calculateNumTouch();
 				});
+				// add the old cell to the not-mine list
 				grid.notMineCells.push(this);
 			}
 		}
 
 		if (!this.hidden) return;
 		if (this.mine) {
-			grid.showAll();
+			grid.revealAllMines();
 			// and add a red overlay or something
 			this.dom.style.backgroundColor = '#ff0000';
 		} else {
@@ -344,8 +347,14 @@ Cell.prototype = {
 		} else {
 			// expose neighbors automatically ... ?
 		}
+		
 		this.hidden = false;
 	},
+	// if a mine goes off we call this on all cells
+	revealMine : function() {
+		if (!this.hidden) return;
+		if (this.mine) this.show();
+	}
 };
 
 function newgame() {
