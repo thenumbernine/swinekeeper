@@ -5,7 +5,7 @@ let cellSize = 24;
 
 const ids = {};
 [
-	'newgame', 'board', 'width', 'height', 'percentMines', 'minesleft',
+	'newgame', 'board', 'width', 'height', 'percentMines', 'minesleft', 'youwin',
 	'nbhddiv',
 ].forEach(f => {
 	ids[f] = document.getElementById(f);
@@ -288,6 +288,7 @@ Cell.prototype = {
 		});
 	},
 	click : function() {
+		if (grid.won) return;
 		if (this.flag) return;
 
 		if (!grid.clicked) {
@@ -329,11 +330,13 @@ Cell.prototype = {
 			const i = grid.notMineCells.indexOf(this);
 			grid.notMineCells.splice(i, 1);
 			if (grid.notMineCells.length == 0) {
-				document.body.appendChild(document.createTextNode('YOU WIN'));
+				grid.won = true;
+				ids.youwin.appendChild(document.createTextNode('YOU WIN'));
 			}
 		}
 	},
 	setFlag : function() {
+		if (grid.won) return;
 		if (!this.hidden) return;
 		// 0 = not marked
 		// 1 = certain
@@ -383,6 +386,7 @@ Cell.prototype = {
 };
 
 function newgame() {
+	ids.youwin.innerHTML = '';
 	if (grid) grid.clearNbhdOverlays();
 	new Grid({
 		size : [
