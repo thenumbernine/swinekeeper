@@ -16,13 +16,13 @@ function Neighborhood(symbol, desc, checked, n) {
 	this.symbol = symbol;
 	this.desc = desc;
 	this.n = n;
-	
+
 	this.input = document.createElement('input');
 	this.input.type = 'checkbox';
 	this.input.checked = checked;
 	ids.nbhddiv.appendChild(document.createTextNode('('+this.desc+') '+this.symbol));
 	ids.nbhddiv.appendChild(this.input);
-	ids.nbhddiv.appendChild(document.createElement('br'));	
+	ids.nbhddiv.appendChild(document.createElement('br'));
 }
 Neighborhood.prototype = {
 	iter : function(f) {
@@ -64,7 +64,7 @@ const nbhds = [
 	new Neighborhood('r', 'right', false, [[1,0]]),
 
 	// TODO how about all possible combinations of L-inf=1, 2, etc ?
-	new Neighborhood('X', 'diagonal-2', false, 
+	new Neighborhood('X', 'diagonal-2', true,
 		(()=>{
 			const n = [];
 			for (let i = 1; i <= 2; ++i) {
@@ -76,7 +76,7 @@ const nbhds = [
 			return n;
 		})()
 	),
-	new Neighborhood('P', 'cardinal-2', false, 
+	new Neighborhood('P', 'cardinal-2', true,
 		(()=>{
 			const n = [];
 			for (let i = 1; i <= 2; ++i) {
@@ -85,10 +85,10 @@ const nbhds = [
 				n.push([i,0]);
 				n.push([-i,0]);
 			}
-			return n;	
+			return n;
 		})()
 	),
-	new Neighborhood('O', 'L-inf=2', false, 
+	new Neighborhood('O', 'L-inf=2', true,
 		(()=>{
 			const n = [];
 			for (let dx = -2; dx <= 2; ++dx) {
@@ -116,22 +116,22 @@ window.grid = grid;
 	this.nbhdOverlays = [];
 
 	[this.width, this.height] = args.size;
-	
+
 	ids.board.innerHTML = '';
-	
+
 	this.notMineCells = [];
-	
+
 	this.cells = [];
 	for (let i = 0; i < this.width; ++i) {
 		this.cells[i] = [];
 	}
-	
+
 	let allowedNbhds = [];
 	nbhds.forEach(n => {
 		if (n.input.checked) allowedNbhds.push(n);
 	});
 	if (!allowedNbhds.length) throw "can't play without any allowed nbhds";
-	
+
 	for (let j = this.height-1; j >= 0; --j) {
 		const tr = document.createElement('tr');
 		ids.board.appendChild(tr);
@@ -149,7 +149,7 @@ window.grid = grid;
 			dom.style.backgroundColor = '#9f9f9f';
 			dom.style.cursor = 'default';
 			dom.addEventListener('click', e => { cell.click(); });
-			dom.addEventListener('contextmenu', e => { 
+			dom.addEventListener('contextmenu', e => {
 				cell.setFlag();
 				e.preventDefault();
 			});
@@ -180,7 +180,7 @@ window.grid = grid;
 			thiz.cells[i][j] = cell;
 		}
 	}
-	
+
 	// now set random mines
 	const numMines = Math.ceil(this.notMineCells.length * parseFloat(ids.percentMines.value) / 100);
 	for (let i = 0; i < numMines; ++i) {
@@ -188,7 +188,7 @@ window.grid = grid;
 	}
 	grid.minesMarked = numMines;
 	ids.minesleft.innerHTML = ''+grid.minesMarked;
-	
+
 	// store nbhd cells
 	this.forEachCell(cell => {
 		cell.nbhdCells = [];
@@ -289,7 +289,7 @@ Cell.prototype = {
 	},
 	click : function() {
 		if (this.flag) return;
-		
+
 		if (!grid.clicked) {
 			grid.clicked = true;
 			if (this.mine) {
@@ -324,7 +324,7 @@ Cell.prototype = {
 					}
 				});
 			}
-	
+
 			// remove from the non-mine cells
 			const i = grid.notMineCells.indexOf(this);
 			grid.notMineCells.splice(i, 1);
@@ -372,7 +372,7 @@ Cell.prototype = {
 		} else {
 			// expose neighbors automatically ... ?
 		}
-		
+
 		this.hidden = false;
 	},
 	// if a mine goes off we call this on all cells
