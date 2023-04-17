@@ -17,6 +17,8 @@ Neighborhood.prototype = {
 			f.apply(null, dxy);
 		});
 	},
+	ptIter : function(i,j,f) {
+	},
 };
 
 const neighborhoods = {
@@ -77,6 +79,24 @@ function Grid(args) {
 	for (let i = 0; i < numMines; ++i) {
 		this.popRandomNonMineCell().mine = true;
 	}
+	
+	// store nbhd cells
+	this.forEachCell(cell => {
+		cell.nbhdCells = [];
+		cell.nbhdIter(cell2 => {
+			cell.nbhdCells.push(cell2);
+		});
+	});
+
+	// store a list of all cells whose neighborhood touches this cell
+	// this is the list that needs to be repopulated if this cells' mine status changes.
+	this.forEachCell(cell => { cell.invNbhdCells = []; });
+	this.forEachCell(cell => {
+		cell.nbhdCells.forEach(cell2 => {
+			cell2.invNbhdCells.push(cell);
+		});
+	});
+	
 	// now count neighboring mines
 	this.forEachCell(cell => cell.calculateNumTouch());
 }
@@ -142,7 +162,7 @@ Cell.prototype = {
 	calculateNumTouch : function() {
 		var thiz = this;
 		this.numTouch = 0;
-		this.nbhdIter(cell => {
+		this.nbhdCells.forEach(cell => {
 			if (cell.mine) thiz.numTouch++;
 		});
 	},
@@ -156,10 +176,10 @@ Cell.prototype = {
 				const newmine = grid.popRandomNonMineCell();
 				newmine.mine = true;
 				// update
-				this.nbhdIter(cell => {
+				this.nbhdCells.forEach(cell => {
 					cell.calculateNumTouch();
 				});
-				newmine.nbhdIter(cell => {
+				newmine.nbhdCells.forEach(cell => {
 					cell.calculateNumTouch();
 				});
 				grid.notMineCells.push(this);
@@ -174,7 +194,7 @@ Cell.prototype = {
 		} else {
 			this.show();
 			if (this.numTouch == 0) {
-				this.nbhdIter(cell => {
+				this.nbhdCells.forEach(cell => {
 					if (!cell.mine) {
 						cell.click();
 					}
