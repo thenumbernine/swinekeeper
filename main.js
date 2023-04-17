@@ -4,11 +4,17 @@ let grid;
 let cellSize = 24;
 
 const ids = {};
-['go', 'board', 'width', 'height', 'percentMines'].forEach(f => {
+[
+	'go', 'board', 'width', 'height', 'percentMines',
+	// nbhds:
+	'nbhd_4p', 'nbhd_4x', 'nbhd_8',
+].forEach(f => {
 	ids[f] = document.getElementById(f);
 });
+window.ids = ids;
 
-function Neighborhood(n) {
+function Neighborhood(symbol, n) {
+	this.symbol = symbol;
 	this.n = n;
 }
 Neighborhood.prototype = {
@@ -17,12 +23,26 @@ Neighborhood.prototype = {
 			f.apply(null, dxy);
 		});
 	},
-	ptIter : function(i,j,f) {
+	gridPtIter : function(ij,f) {
+		const [i,j] = ij;
+		this.iter((dx,dy) => {
+			const x = i+dx;
+			const y = j+dy;
+			if (x >= 0 &&
+				x < grid.width &&
+				y >= 0 &&
+				y < grid.height
+			) {
+				f(grid.cells[x][y]);
+			}
+		});
 	},
 };
 
 const neighborhoods = {
-	_8x8 : new Neighborhood((() => {
+	_4p : new Neighborhood('+', [[1,0],[-1,0],[0,1],[0,-1]]),
+	_4x : new Neighborhood('x', [[1,1],[1,-1],[-1,1],[-1,-1]]),
+	_8 : new Neighborhood('o', (() => {	// union of the above two
 		const n = [];
 		for (let dx = -1; dx <= 1; ++dx) {
 			for (let dy = -1; dy <= 1; ++dy) {
@@ -34,9 +54,16 @@ const neighborhoods = {
 		return n;
 	})()),
 };
+let nbhdKeys = [];
+for (let k in neighborhoods) nbhdKeys.push(k);
+
+function pickRandom(ar) {
+	return ar[parseInt(Math.random() * ar.length)];
+}
 
 function Grid(args) {
 	grid = this;	//assign here so ctor calls can access 'grid'
+window.grid = grid;
 	const thiz = this;
 	this.clicked = false;
 	[this.width, this.height] = args.size;
@@ -46,6 +73,11 @@ function Grid(args) {
 	for (let i = 0; i < this.width; ++i) {
 		this.cells[i] = [];
 	}
+	let allowedNbhds = [];
+	nbhdKeys.forEach(k => {
+		if (ids['nbhd'+k].checked) allowedNbhds.push(k);
+	});
+	if (!allowedNbhds.length) throw "can't play without any allowed nbhds";
 	for (let j = 0; j < this.height; ++j) {
 		const tr = document.createElement('tr');
 		ids.board.appendChild(tr);
@@ -67,7 +99,9 @@ function Grid(args) {
 				cell.setFlag();
 				e.preventDefault();
 			});
-			cell.nbhd = neighborhoods._8x8;
+			let nbhdType = pickRandom(allowedNbhds);
+			cell.nbhd = neighborhoods[nbhdType];
+			if (!cell.nbhd) throw "couldn't find nbhd "+nbhdType;
 			tr.appendChild(dom);
 			thiz.notMineCells.push(cell);
 			thiz.cells[i][j] = cell;
@@ -83,7 +117,7 @@ function Grid(args) {
 	// store nbhd cells
 	this.forEachCell(cell => {
 		cell.nbhdCells = [];
-		cell.nbhdIter(cell2 => {
+		cell.nbhd.gridPtIter(cell.pos, cell2 => {
 			cell.nbhdCells.push(cell2);
 		});
 	});
@@ -145,20 +179,6 @@ function Cell(args) {
 	this.hidden = true;
 }
 Cell.prototype = {
-	nbhdIter : function(f) {
-		const [i, j] = this.pos;
-		this.nbhd.iter((dx,dy) => {
-			const x = i+dx;
-			const y = j+dy;
-			if (x >= 0 &&
-				x < grid.width &&
-				y >= 0 &&
-				y < grid.height
-			) {
-				f(grid.cells[x][y], dx, dy);
-			}
-		});
-	},
 	calculateNumTouch : function() {
 		var thiz = this;
 		this.numTouch = 0;
@@ -221,12 +241,12 @@ Cell.prototype = {
 	},
 	show : function() {
 		if (!this.hidden) return;
-		let text = '';
+		let text = this.nbhd.symbol;
 		this.dom.style.backgroundColor = '#cfcfcf';
 		if (this.mine) {
 			text = '*';
 		} else if (this.numTouch > 0) {
-			text = this.numTouch;
+			text = this.numTouch + text;
 			const colors = [
 				'#7fff7f',
 				'#ffff7f',
@@ -262,6 +282,3 @@ function go() {
 ids.go.addEventListener('click', go);
 
 go();
-
-window.grid = grid;
-window.ids = ids;
