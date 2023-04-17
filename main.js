@@ -6,16 +6,23 @@ let cellSize = 24;
 const ids = {};
 [
 	'go', 'board', 'width', 'height', 'percentMines', 'minesleft',
-	// nbhds:
-	'nbhd_4p', 'nbhd_4x', 'nbhd_8',
+	'nbhddiv',
 ].forEach(f => {
 	ids[f] = document.getElementById(f);
 });
 window.ids = ids;
 
-function Neighborhood(symbol, n) {
+function Neighborhood(symbol, desc, n) {
 	this.symbol = symbol;
+	this.desc = desc;
 	this.n = n;
+	
+	this.input = document.createElement('input');
+	this.input.type = 'checkbox';
+	this.input.checked = true;
+	ids.nbhddiv.appendChild(document.createTextNode('('+this.desc+') '+this.symbol));
+	ids.nbhddiv.appendChild(this.input);
+	ids.nbhddiv.appendChild(document.createElement('br'));	
 }
 Neighborhood.prototype = {
 	iter : function(f) {
@@ -38,11 +45,10 @@ Neighborhood.prototype = {
 		});
 	},
 };
-
-const neighborhoods = {
-	_4p : new Neighborhood('+', [[1,0],[-1,0],[0,1],[0,-1]]),
-	_4x : new Neighborhood('x', [[1,1],[1,-1],[-1,1],[-1,-1]]),
-	_8 : new Neighborhood('o', (() => {	// union of the above two
+const nbhds = [
+	new Neighborhood('+', 'cardinal', [[1,0],[-1,0],[0,1],[0,-1]]),
+	new Neighborhood('x', 'diagonal', [[1,1],[1,-1],[-1,1],[-1,-1]]),
+	new Neighborhood('o', 'L-inf=1', (() => {	// union of the above two
 		const n = [];
 		for (let dx = -1; dx <= 1; ++dx) {
 			for (let dy = -1; dy <= 1; ++dy) {
@@ -53,9 +59,8 @@ const neighborhoods = {
 		}
 		return n;
 	})()),
-};
-let nbhdKeys = [];
-for (let k in neighborhoods) nbhdKeys.push(k);
+];
+window.nbhds = nbhds;
 
 function pickRandom(ar) {
 	return ar[parseInt(Math.random() * ar.length)];
@@ -80,8 +85,8 @@ window.grid = grid;
 	}
 	
 	let allowedNbhds = [];
-	nbhdKeys.forEach(k => {
-		if (ids['nbhd'+k].checked) allowedNbhds.push(k);
+	nbhds.forEach(n => {
+		if (n.input.checked) allowedNbhds.push(n);
 	});
 	if (!allowedNbhds.length) throw "can't play without any allowed nbhds";
 	
@@ -129,9 +134,9 @@ window.grid = grid;
 				});
 				grid.nbhdOverlays = [];
 			});
-			let nbhdType = pickRandom(allowedNbhds);
-			cell.nbhd = neighborhoods[nbhdType];
-			if (!cell.nbhd) throw "couldn't find nbhd "+nbhdType;
+			let nbhd = pickRandom(allowedNbhds);
+			cell.nbhd = nbhd;
+			if (!cell.nbhd) throw "couldn't find nbhd "+nbhd;
 			tr.appendChild(dom);
 			thiz.notMineCells.push(cell);
 			thiz.cells[i][j] = cell;
@@ -173,7 +178,7 @@ window.grid = grid;
 							if that neighbor hasn't been assigned a neighborhood
 							then set that neighboring cell to that neighborhood.
 				... until we finally set a neighbor's neighborhood.
-		then with whatever cells haven't been assigned , give them random neighborhoods.
+		then with whatever cells haven't been assigned , give them random nbhds.
 	this will guaranteee that all cells are looked at by at least one cell
 	*/
 
