@@ -5,21 +5,21 @@ let cellSize = 24;
 
 const ids = {};
 [
-	'go', 'board', 'width', 'height', 'percentMines', 'minesleft',
+	'newgame', 'board', 'width', 'height', 'percentMines', 'minesleft',
 	'nbhddiv',
 ].forEach(f => {
 	ids[f] = document.getElementById(f);
 });
 window.ids = ids;
 
-function Neighborhood(symbol, desc, n) {
+function Neighborhood(symbol, desc, checked, n) {
 	this.symbol = symbol;
 	this.desc = desc;
 	this.n = n;
 	
 	this.input = document.createElement('input');
 	this.input.type = 'checkbox';
-	this.input.checked = true;
+	this.input.checked = checked;
 	ids.nbhddiv.appendChild(document.createTextNode('('+this.desc+') '+this.symbol));
 	ids.nbhddiv.appendChild(this.input);
 	ids.nbhddiv.appendChild(document.createElement('br'));	
@@ -46,19 +46,37 @@ Neighborhood.prototype = {
 	},
 };
 const nbhds = [
-	new Neighborhood('+', 'cardinal', [[1,0],[-1,0],[0,1],[0,-1]]),
-	new Neighborhood('x', 'diagonal', [[1,1],[1,-1],[-1,1],[-1,-1]]),
-	new Neighborhood('o', 'L-inf=1', (() => {	// union of the above two
-		const n = [];
-		for (let dx = -1; dx <= 1; ++dx) {
-			for (let dy = -1; dy <= 1; ++dy) {
-				if (!(dx == 0 && dy == 0)) {
-					n.push([dx,dy]);
+	new Neighborhood('o', 'L-inf=1', true, [
+		[1,0],[-1,0],[0,1],[0,-1],
+		[1,1],[1,-1],[-1,1],[-1,-1]
+	]),
+	new Neighborhood('+', 'cardinal', true, [[1,0],[-1,0],[0,1],[0,-1]]),
+	new Neighborhood('x', 'diagonal', true, [[1,1],[1,-1],[-1,1],[-1,-1]]),
+
+	new Neighborhood('ul', 'up left', false, [[-1,1]]),
+	new Neighborhood('ur', 'up right', false, [[1,1]]),
+	new Neighborhood('dl', 'down left', false, [[-1,-1]]),
+	new Neighborhood('dr', 'down right', false, [[1,-1]]),
+
+	new Neighborhood('u', 'up', false, [[0,1]]),
+	new Neighborhood('d', 'down', false, [[0,-1]]),
+	new Neighborhood('l', 'left', false, [[-1,0]]),
+	new Neighborhood('r', 'right', false, [[1,0]]),
+
+	// TODO how about all possible combinations of L-inf=1 ?
+	new Neighborhood('O', 'L-inf=2', false, 
+		(()=>{
+			const n = [];
+			for (let dx = -2; dx <= 2; ++dx) {
+				for (let dy = -2; dy <= 2; ++dy) {
+					if (!(dx == 0 && dy == 0)) {
+						n.push([dx,dy]);
+					}
 				}
 			}
-		}
-		return n;
-	})()),
+			return n;
+		})()
+	),
 ];
 window.nbhds = nbhds;
 
@@ -90,7 +108,7 @@ window.grid = grid;
 	});
 	if (!allowedNbhds.length) throw "can't play without any allowed nbhds";
 	
-	for (let j = 0; j < this.height; ++j) {
+	for (let j = this.height-1; j >= 0; --j) {
 		const tr = document.createElement('tr');
 		ids.board.appendChild(tr);
 		for (let i = 0; i < this.width; ++i) {
@@ -329,7 +347,7 @@ Cell.prototype = {
 	},
 };
 
-function go() {
+function newgame() {
 	new Grid({
 		size : [
 			parseInt(ids.width.value),
@@ -338,6 +356,14 @@ function go() {
 	});
 }
 
-ids.go.addEventListener('click', go);
+ids.newgame.addEventListener('click', newgame);
 
-go();
+
+document.body.addEventListener('keydown', e => {
+	if (e.keyCode == 113) {	//F2
+		e.preventDefault();
+		newgame();
+	}
+});
+
+newgame();
