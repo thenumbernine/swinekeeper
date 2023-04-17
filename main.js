@@ -1,7 +1,7 @@
 let grid;
 
 const ids = {};
-['newgame', 'board', 'width', 'height', 'percentMines', 'minesleft', 'youwin', 'cellsize', 'nbhddiv', 'qgmode', 'hints'].forEach(f => {
+['newgame', 'board', 'width', 'height', 'percentMines', 'minesleft', 'youwin', 'cellsize', 'nbhddiv', 'qgmode', 'hints', 'percentUncovered', 'timeTaken'].forEach(f => {
 	ids[f] = document.getElementById(f);
 });
 window.ids = ids;
@@ -159,7 +159,7 @@ window.grid = grid;
 	const thiz = this;
 	this.clicked = false;
 	this.nbhdOverlays = [];
-
+	
 	[this.width, this.height] = args.size;
 
 	ids.board.innerHTML = '';
@@ -243,6 +243,11 @@ window.grid = grid;
 		}
 	}
 
+	// TODO set neighborhoods *here* afterwar cell has been assigned
+	// so we have cell.pos for the qg nbhd generator
+
+	this.setNumHidden(this.width * this.height);	// or todo i could count them ...
+
 	// now set random mines
 	this.notMineCells = this.allCells.slice();
 	const numMines = Math.ceil(this.notMineCells.length * parseFloat(ids.percentMines.value) / 100);
@@ -315,6 +320,50 @@ Grid.prototype = {
 		});
 		this.nbhdOverlays = [];
 	},
+	setNumHidden : function(h) {
+		this.numHidden = h;
+		const percentUncovered = 1 - this.numHidden / (this.width * this.height);
+		ids.percentUncovered.innerHTML = Math.floor(100*percentUncovered)+'%';
+	},
+	checkFirstClick : function(cell) {
+		var thiz = this;
+		if (this.clicked) return;
+		this.clicked = true;
+
+		this.startTime = Date.now();
+		this.timerInterval = setInterval(() => {
+			let dt = Math.floor((Date.now() - thiz.startTime) / 1000);
+			let s = dt % 60;
+			dt -= s;
+			dt /= 60;
+			let m = dt % 60;
+			dt -= m;
+			dt /= 60;
+			let h = dt;
+			// hmm printf in javascript?
+			if (s < 10) s = '0'+s;
+			if (m < 10) m = '0'+m;
+			ids.timeTaken.innerHTML = h+':'+m+':'+s;
+		}, 500);
+
+
+		if (cell.mine) {
+			cell.mine = false;
+			const newmine = this.popRandomNonMineCell();
+			newmine.mine = true;
+			// update
+			cell.calculateNumTouch();
+			newmine.calculateNumTouch();
+			cell.invNbhdCells.forEach(cell2 => {
+				cell2.calculateNumTouch();
+			});
+			newmine.invNbhdCells.forEach(cell2 => {
+				cell2.calculateNumTouch();
+			});
+			// add the old cell to the not-mine list
+			this.notMineCells.push(cell);
+		}
+	},
 };
 
 //iterators?
@@ -354,25 +403,7 @@ Cell.prototype = {
 		if (grid.gamedone) return;
 		if (this.flag) return;
 
-		if (!grid.clicked) {
-			grid.clicked = true;
-			if (this.mine) {
-				this.mine = false;
-				const newmine = grid.popRandomNonMineCell();
-				newmine.mine = true;
-				// update
-				this.calculateNumTouch();
-				newmine.calculateNumTouch();
-				this.invNbhdCells.forEach(cell => {
-					cell.calculateNumTouch();
-				});
-				newmine.invNbhdCells.forEach(cell => {
-					cell.calculateNumTouch();
-				});
-				// add the old cell to the not-mine list
-				grid.notMineCells.push(this);
-			}
-		}
+		grid.checkFirstClick(this);
 
 		if (!this.hidden) return;
 		if (this.mine) {
@@ -441,6 +472,7 @@ Cell.prototype = {
 		}
 
 		this.hidden = false;
+		grid.setNumHidden(grid.numHidden-1);
 	},
 	// if a mine goes off we call this on all cells
 	revealMine : function() {
@@ -451,7 +483,11 @@ Cell.prototype = {
 
 function newgame() {
 	ids.youwin.innerHTML = '';
-	if (grid) grid.clearNbhdOverlays();
+	if (grid) {
+		clearInterval(grid.timerInterval);
+		ids.timeTaken.innerHTML = '';
+		grid.clearNbhdOverlays();
+	}
 	new Grid({
 		size : [
 			parseInt(ids.width.value),
