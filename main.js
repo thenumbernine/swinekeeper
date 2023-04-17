@@ -339,7 +339,7 @@ Grid.prototype = {
 	refreshUncoveredPercent : function() {
 		const numRevealed = this.width * this.height
 			- this.numHidden
-			- (this.numMines - this.minesUnmarked);
+			+ (this.numMines - this.minesUnmarked);
 		const percentUncovered = numRevealed / (this.width * this.height);
 		ids.percentUncovered.innerHTML = Math.floor(100*percentUncovered)+'%';
 	},
