@@ -63,7 +63,31 @@ const nbhds = [
 	new Neighborhood('l', 'left', false, [[-1,0]]),
 	new Neighborhood('r', 'right', false, [[1,0]]),
 
-	// TODO how about all possible combinations of L-inf=1 ?
+	// TODO how about all possible combinations of L-inf=1, 2, etc ?
+	new Neighborhood('X', 'diagonal-2', false, 
+		(()=>{
+			const n = [];
+			for (let i = 1; i <= 2; ++i) {
+				n.push([i,i]);
+				n.push([i,-i]);
+				n.push([-i,i]);
+				n.push([-i,-i]);
+			}
+			return n;
+		})()
+	),
+	new Neighborhood('P', 'cardinal-2', false, 
+		(()=>{
+			const n = [];
+			for (let i = 1; i <= 2; ++i) {
+				n.push([0,i]);
+				n.push([0,-i]);
+				n.push([i,0]);
+				n.push([-i,0]);
+			}
+			return n;	
+		})()
+	),
 	new Neighborhood('O', 'L-inf=2', false, 
 		(()=>{
 			const n = [];
