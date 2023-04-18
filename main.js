@@ -1,12 +1,38 @@
 let grid;
 
+const body = document.body;
+
 function posmod(x,y) {
 	return ((x % y) + y) % y;
 }
 
+function Text(text) {
+	return document.createTextNode(text);
+}
+
+function DOM(tag, args, style, listeners) {
+	const dom = document.createElement(tag);
+	if (args) {
+		for (let k in args) {
+			dom[k] = args[k];
+		}
+	}
+	if (style) {
+		for (let k in style) {
+			dom.style[k] = style[k];
+		}
+	}
+	if (listeners) {
+		for (let k in listeners) {
+			dom.addEventListener(k, listeners[k]);
+		}
+	}
+	return dom;
+}
+
 const ids = {};
-['newgame', 'board', 'width', 'height', 'percentMines', 'minesleft', 'cellsize', 'nbhddiv', 'qgmode', 'hints', 'torus', 'percentUncovered', 'timeTaken', 'help', 'helpdiv'].forEach(f => {
-	ids[f] = document.getElementById(f);
+document.querySelectorAll('[id]').forEach(n => {
+	ids[n.id] = n;
 });
 window.ids = ids;
 
@@ -31,13 +57,20 @@ function Neighborhood(n, symbol, desc, checked) {
 	// default neighborhoods (not the QG ones)
 	if (desc) {
 		this.desc = desc;
-		this.input = document.createElement('input');
-		this.input.type = 'checkbox';
-		this.input.checked = checked;
-		this.input.addEventListener('change', changedConfig);
-		ids.nbhddiv.appendChild(document.createTextNode('('+this.desc+') '+this.symbol));
+		this.input = DOM(
+			'input',
+			{
+				type : 'checkbox',
+				checked : checked,
+			},
+			null,
+			{
+				change : changedConfig,
+			}
+		);
+		ids.nbhddiv.appendChild(Text('('+this.desc+') '+this.symbol));
 		ids.nbhddiv.appendChild(this.input);
-		ids.nbhddiv.appendChild(document.createElement('br'));
+		ids.nbhddiv.appendChild(DOM('br'));
 	}
 }
 Neighborhood.prototype = {
@@ -65,13 +98,33 @@ Neighborhood.prototype = {
 		});
 	},
 };
+
+function makeDxys(r, f) {
+	let n = [];
+	for (let dx = -r; dx <= r; ++dx) {
+		for (let dy = -r; dy <= r; ++dy) {
+			if (!(dx == 0 && dy == 0) && f(dx,dy)) n.push([dx,dy]);
+		}
+	}
+	return n;
+}
+
 const nbhds = [
-	new Neighborhood([
-		[1,0],[-1,0],[0,1],[0,-1],
-		[1,1],[1,-1],[-1,1],[-1,-1]
-	], 'o', '3x3', true),
-	new Neighborhood([[1,0],[-1,0],[0,1],[0,-1]], '+', 'cardinal', true),
-	new Neighborhood([[1,1],[1,-1],[-1,1],[-1,-1]], 'x', 'diagonal', true),
+	new Neighborhood(makeDxys(1, (x,y) => { return true; }), 'o', '3x3', true),
+	new Neighborhood(makeDxys(1, (x,y) => { return x==0 || y==0; }), '+', '3x3 cardinals', true),
+	new Neighborhood(makeDxys(1, (x,y) => { return x!=0 && y!=0; }), 'x', '3x3 diagonals', true),
+	
+	new Neighborhood(makeDxys(2, (x,y) => { return true; }), 'O', '5x5', true),
+	new Neighborhood(makeDxys(2, (x,y) => { return x==0 || y==0; }), 'P', '5x5 cardinals', true),
+	new Neighborhood(makeDxys(2, (x,y) => { return Math.abs(x)==Math.abs(y); }), 'X', '5x5 diagonals', true),
+	new Neighborhood(makeDxys(2, (x,y) => { return Math.abs(x)!=0 && Math.abs(y)!=0; }), 'F', '5x5 corners', true),
+	new Neighborhood(makeDxys(2, (x,y) => { return Math.abs(x)<=1; }), 'A', '3x5', true),
+	new Neighborhood(makeDxys(2, (x,y) => { return Math.abs(y)<=1; }), 'B', '5x3', true),
+	new Neighborhood(makeDxys(2, (x,y) => { return Math.abs(x) + Math.abs(y) <= 2; }), 'G', '5x5 diamond', true),
+	new Neighborhood(makeDxys(2, (x,y) => { return Math.abs(x)==2 || Math.abs(y)==2; }), 'C', '5x5 hollow', true),
+	new Neighborhood(makeDxys(2, (x,y) => { return Math.max(Math.abs(x), Math.abs(y)/2)==1; }), 'D', '3x5 hollow', true),
+	new Neighborhood(makeDxys(2, (x,y) => { return Math.max(Math.abs(x)/2, Math.abs(y))==1; }), 'E', '5x3 hollow', true),
+	new Neighborhood(makeDxys(2, (x,y) => { return Math.abs(x) + Math.abs(y) == 2; }), 'G', '5x5 hollow diamond', true),
 
 	new Neighborhood([[-1,1]], 'ul', 'up left', false),
 	new Neighborhood([[1,1]], 'ur', 'up right', false),
@@ -83,47 +136,6 @@ const nbhds = [
 	new Neighborhood([[-1,0]], 'l', 'left', false),
 	new Neighborhood([[1,0]], 'r', 'right', false),
 
-	// TODO how about all possible combinations of L-inf=1, 2, etc ?
-	new Neighborhood(
-		(()=>{
-			const n = [];
-			for (let i = 1; i <= 2; ++i) {
-				n.push([i,i]);
-				n.push([i,-i]);
-				n.push([-i,i]);
-				n.push([-i,-i]);
-			}
-			return n;
-		})(),
-		'X', 'diagonal-2', true
-	),
-	new Neighborhood(
-		(()=>{
-			const n = [];
-			for (let i = 1; i <= 2; ++i) {
-				n.push([0,i]);
-				n.push([0,-i]);
-				n.push([i,0]);
-				n.push([-i,0]);
-			}
-			return n;
-		})(),
-		'P', 'cardinal-2', true
-	),
-	new Neighborhood(
-		(()=>{
-			const n = [];
-			for (let dx = -2; dx <= 2; ++dx) {
-				for (let dy = -2; dy <= 2; ++dy) {
-					if (!(dx == 0 && dy == 0)) {
-						n.push([dx,dy]);
-					}
-				}
-			}
-			return n;
-		})(),
-		'O', '5x5', true
-	),
 ];
 window.nbhds = nbhds;
 
@@ -205,68 +217,74 @@ window.grid = grid;
 	this.allCells = [];
 	ids.board.style.width = (this.width * cellSize)+'px';
 	for (let j = this.height-1; j >= 0; --j) {
-		const tr = document.createElement('tr');
+		const tr = DOM('tr');
 		tr.style.width = (this.width * cellSize) + 'px';
 		ids.board.appendChild(tr);
 		for (let i = 0; i < this.width; ++i) {
-			const dom = document.createElement('td');
 			const cell = new Cell();
 			cell.pos = [i,j];
-			cell.dom = dom;
-			dom.style.width = cellSize + 'px';
-			dom.style.height = cellSize + 'px';
-			dom.style.border = '1px solid black';
-			dom.style.padding = '0px';
-			dom.style.margin = '0px';
-			dom.style.textAlign = 'center';
-			dom.style.backgroundColor = '#9f9f9f';
-			dom.style.overflow = 'hidden';
-			dom.style.whitespace = 'nowrap';
-			dom.style.cursor = 'default';
-			dom.addEventListener('click', e => { cell.click(); });
-			dom.addEventListener('contextmenu', e => {
-				cell.setFlag();
-				e.preventDefault();
-			});
-			dom.addEventListener('mouseenter', e => {
-				if (!ids.hints.checked) return;
-				
-				// properties for !cell.hidden
-				let color = '#ff0000';
-				let ignoreHidden = false;
-				
-				let highlightCallback = cell2 => {
-					if (ignoreHidden && cell2.hidden) return;
-					const overlay = document.createElement('div');
-					overlay.style.position = 'absolute';
-					const rect = cell2.dom.getBoundingClientRect();
-					const borderSize = 3;
-					overlay.style.left = (rect.x + window.scrollX - borderSize) + 'px';
-					overlay.style.top = (rect.y + window.scrollY - borderSize) + 'px';
-					overlay.style.width = rect.width + 'px';
-					overlay.style.height = rect.width + 'px';
-					overlay.style.border = borderSize+'px solid '+color;
-					// option ... put overlays on revealed tiles? or just dimly on revealed tiles...
-					overlay.style.opacity = ignoreHidden ? .5 : (cell2.hidden ? .8 : .3);
-					document.body.appendChild(overlay);
-					grid.nbhdOverlays.push(overlay);
-				};
-				if (!cell.hidden) { 
-					// option ... green overlay when all mines are marked?
-					let flags = 0;
-					cell.nbhdIter(cell2 => {
-						if (cell2.flag == 1) flags++;
-					});
-					if (flags == cell.numTouch) color = '#00ff00';
-					cell.nbhdIter(highlightCallback);
-				} else {
-					color = '#ffff00';
-					ignoreHidden = true;
-					cell.invNbhdCells.forEach(highlightCallback);
+			const dom = DOM(
+				'td',
+				undefined,
+				{
+					width : cellSize + 'px',
+					height : cellSize + 'px',
+					border : '1px solid black',
+					padding : '0px',
+					margin : '0px',
+					textAlign : 'center',
+					backgroundColor : '#9f9f9f',
+					overflow : 'hidden',
+					whitespace : 'nowrap',
+					cursor : 'default',
+				},
+				{
+					click : e => { cell.click(); },
+					contextmenu : e => {
+						cell.setFlag();
+						e.preventDefault();
+					},
+					mouseenter : e => {
+						if (!ids.hints.checked) return;
+						
+						// properties for !cell.hidden
+						let color = '#ff0000';
+						let ignoreHidden = false;
+						
+						let highlightCallback = cell2 => {
+							if (ignoreHidden && cell2.hidden) return;
+							const overlay = DOM('div');
+							overlay.style.position = 'absolute';
+							const rect = cell2.dom.getBoundingClientRect();
+							const borderSize = 3;
+							overlay.style.left = (rect.x + window.scrollX - borderSize + 1) + 'px';
+							overlay.style.top = (rect.y + window.scrollY - borderSize + 1) + 'px';
+							overlay.style.width = rect.width + 'px';
+							overlay.style.height = rect.width + 'px';
+							overlay.style.border = borderSize+'px solid '+color;
+							// option ... put overlays on revealed tiles? or just dimly on revealed tiles...
+							overlay.style.opacity = ignoreHidden ? .5 : (cell2.hidden ? .8 : .3);
+							body.appendChild(overlay);
+							grid.nbhdOverlays.push(overlay);
+						};
+						if (!cell.hidden) { 
+							// option ... green overlay when all mines are marked?
+							let flags = 0;
+							cell.nbhdIter(cell2 => {
+								if (cell2.flag == 1) flags++;
+							});
+							if (flags == cell.numTouch) color = '#00ff00';
+							cell.nbhdIter(highlightCallback);
+						} else {
+							color = '#ffff00';
+							ignoreHidden = true;
+							cell.invNbhdCells.forEach(highlightCallback);
+						}
+					},
+					mouseleave : e => { grid.clearNbhdOverlays(); },
 				}
-				
-			});
-			dom.addEventListener('mouseleave', e => { grid.clearNbhdOverlays(); });
+			);
+			cell.dom = dom;
 			let nbhd = !nbhdFFA
 				? pickRandom(allowedNbhds)
 				: createRandomNeighborhood(cell.pos);
@@ -351,7 +369,7 @@ Grid.prototype = {
 		});
 		/**/
 		/* iterators?
-		for (cell in cellIter()) {
+		for (let cell in cellIter()) {
 			if (!cell.hidden) return;
 			if (cell.mine) cell.show();
 		}
@@ -480,7 +498,7 @@ Cell.prototype = {
 			grid.notMineCells.splice(i, 1);
 			if (grid.notMineCells.length == 0) {
 				grid.stopGame();
-				ids.timeTaken.appendChild(document.createTextNode(' YOU WIN'));
+				ids.timeTaken.appendChild(Text(' YOU WIN'));
 			}
 		}
 	},
@@ -519,9 +537,7 @@ Cell.prototype = {
 			this.dom.style.backgroundColor = colors[(this.numTouch-1)%colors.length];
 		}
 		if (text) {
-			this.dom.appendChild(
-				document.createTextNode(''+text)
-			);
+			this.dom.appendChild(Text(''+text));
 		} else {
 			// expose neighbors automatically ... ?
 		}
@@ -550,8 +566,7 @@ function newgame() {
 
 ids.newgame.addEventListener('click', newgame);
 
-
-document.body.addEventListener('keydown', e => {
+body.addEventListener('keydown', e => {
 	if (e.keyCode == 113) {	//F2
 		e.preventDefault();
 		newgame();
