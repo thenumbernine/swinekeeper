@@ -455,7 +455,8 @@ window.grid = grid;
 	const thiz = this;
 	this.clicked = false;
 	this.nbhdOverlays = [];
-	
+	this.deaths = 0;
+
 	[this.width, this.height] = args.size;
 
 	ids.board.innerHTML = '';
@@ -651,9 +652,8 @@ Grid.prototype = {
 		const percentUncovered = numRevealed / (this.width * this.height);
 		ids.percentUncovered.innerHTML = Math.floor(100*percentUncovered)+'%';
 	},
-	//static method, so use 'grid' global...
 	timerIntervalCallback : function() {
-		let dt = Math.floor((Date.now() - grid.startTime) / 1000);
+		let dt = Math.floor((Date.now() - this.startTime) / 1000);
 		let s = dt % 60;
 		dt -= s;
 		dt /= 60;
@@ -664,10 +664,14 @@ Grid.prototype = {
 		// hmm printf in javascript?
 		if (s < 10) s = '0'+s;
 		if (m < 10) m = '0'+m;
-		ids.timeTaken.innerHTML = h+':'+m+':'+s;
+		let t = h+':'+m+':'+s;
+		if (this.deaths) t += ' ('+this.deaths+' undos)'
+		ids.timeTaken.innerHTML = t;
 	},
 	setTimerInterval : function() {
-		this.timerInterval = setInterval(this.timerIntervalCallback, 500);
+		const thiz = this;
+		this.timerInterval = setInterval(() => { thiz.timerIntervalCallback(); }, 500);
+		this.timerIntervalCallback();
 	},
 	checkFirstClick : function(cell) {
 		if (this.clicked) return;
@@ -768,6 +772,7 @@ Cell.prototype = {
 					click : e => {
 						removeUndoOrGiveUp();
 						this.hide();
+						grid.deaths++;
 						grid.gamedone = false;
 						grid.timerIntervalCallback();	//reset timeTaken div html
 						grid.setTimerInterval();
