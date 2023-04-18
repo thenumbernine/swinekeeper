@@ -6,6 +6,10 @@ function posmod(x,y) {
 	return ((x % y) + y) % y;
 }
 
+function removeFromParent(o) {
+	o.parentNode.removeChild(o);
+}
+
 function Text(text) {
 	return document.createTextNode(text);
 }
@@ -49,6 +53,23 @@ ids.help.addEventListener('change', e => {
 	} else {
 		ids.helpdiv.style.display = 'none';
 	}
+});
+
+ids.showcellnbhd.addEventListener('change', e => {
+	if (!grid || !grid.clicked) return;
+	//if we're mid-game then toggle all revealed cells
+	grid.forEachCell(cell => {
+		if (!cell.hidden) {
+			if (!ids.showcellnbhd.checked) {
+				if (cell.nbhdSymbolText) {
+					removeFromParent(cell.nbhdSymbolText);
+					cell.nbhdSymbolText = undefined;
+				}
+			} else {
+				cell.addNbhdSymbolText();
+			}
+		}
+	});
 });
 
 function Neighborhood(n, symbol, desc, checked) {
@@ -383,9 +404,7 @@ Grid.prototype = {
 		*/
 	},
 	clearNbhdOverlays : function() {
-		this.nbhdOverlays.forEach(o => {
-			o.parentNode.removeChild(o);
-		});
+		this.nbhdOverlays.forEach(o => { removeFromParent(o); });
 		this.nbhdOverlays = [];
 	},
 	refreshUncoveredPercent : function() {
@@ -523,7 +542,7 @@ Cell.prototype = {
 	},
 	show : function(dontChangeUncovered) {
 		if (!this.hidden) return;
-		let text = this.nbhd.symbol;
+		let text = '';
 		this.dom.style.backgroundColor = '#dfdfdf';
 		if (this.mine) {
 			text = '*';
@@ -540,18 +559,24 @@ Cell.prototype = {
 				'#3f3f7f',
 			];
 			this.dom.style.backgroundColor = colors[(this.numTouch-1)%colors.length];
-		}
-		if (text) {
-			this.dom.appendChild(Text(''+text));
 		} else {
-			// expose neighbors automatically ... ?
+			// revealed empty tile
 		}
+		if (text != '') {
+			this.dom.appendChild(Text(''+text));
+		}
+		this.addNbhdSymbolText();
 
 		this.hidden = false;
 		grid.numHidden--;
 		if (!dontChangeUncovered) {
 			grid.refreshUncoveredPercent();
 		}
+	},
+	addNbhdSymbolText : function() {
+		if (!ids.showcellnbhd.checked) return;
+		this.nbhdSymbolText = Text(''+this.nbhd.symbol);
+		this.dom.appendChild(this.nbhdSymbolText);
 	},
 	makeNbhdOverlays : function() {
 		if (!ids.hints.checked) return;
