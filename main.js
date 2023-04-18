@@ -257,10 +257,10 @@ window.grid = grid;
 							overlay.style.position = 'absolute';
 							const rect = cell2.dom.getBoundingClientRect();
 							const borderSize = 3;
-							overlay.style.left = (rect.x + window.scrollX - borderSize + 1) + 'px';
-							overlay.style.top = (rect.y + window.scrollY - borderSize + 1) + 'px';
-							overlay.style.width = rect.width + 'px';
-							overlay.style.height = rect.width + 'px';
+							overlay.style.left = (rect.x + window.scrollX) + 'px';
+							overlay.style.top = (rect.y + window.scrollY) + 'px';
+							overlay.style.width = (rect.width - 2*borderSize-1) + 'px';
+							overlay.style.height = (rect.width - 2*borderSize-1) + 'px';
 							overlay.style.border = borderSize+'px solid '+color;
 							// option ... put overlays on revealed tiles? or just dimly on revealed tiles...
 							overlay.style.opacity = ignoreHidden ? .5 : (cell2.hidden ? .8 : .3);
