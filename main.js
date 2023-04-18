@@ -188,78 +188,6 @@ o...o
 .o.o.
 o...o
 `), 'X', '5x5 diagonals', true),
-
-// iterate over all upper-left corner upper-triangular permutations of on/off and symmetrize them
-	new Neighborhood(nbhdsFromStr(`
-o...o
-.....
-.....
-.....
-o...o
-`), 'A', '5x5 symmetric', true),
-	new Neighborhood(nbhdsFromStr(`
-.o.o.
-o...o
-.....
-o...o
-.o.o.
-`), 'B', '5x5 symmetric', true),
-	new Neighborhood(nbhdsFromStr(`
-..o..
-.....
-o...o
-.....
-..o..
-`), 'C', '5x5 symmetric', true),
-	new Neighborhood(nbhdsFromStr(`
-oo.oo
-o...o
-.....
-o...o
-oo.oo
-`), 'C', '5x5 symmetric', true),
-	new Neighborhood(nbhdsFromStr(`
-o.o.o
-.....
-o...o
-.....
-o.o.o
-`), 'D', '5x5 symmetric', true),
-	new Neighborhood(nbhdsFromStr(`
-o...o
-..o..
-.o.o.
-..o..
-o...o
-`), 'E', '5x5 symmetric', true),
-	new Neighborhood(nbhdsFromStr(`
-.ooo.
-o...o
-o...o
-o...o
-.ooo.
-`), 'F', '5x5 symmetric', true),
-	new Neighborhood(nbhdsFromStr(`
-.o.o.
-oo.oo
-.....
-oo.oo
-.o.o.
-`), 'G', '5x5 symmetric', true),
-	new Neighborhood(nbhdsFromStr(`
-.o.o.
-o.o.o
-.o.o.
-o.o.o
-.o.o.
-`), 'H', '5x5 symmetric', true),
-	new Neighborhood(nbhdsFromStr(`
-..o..
-.o.o.
-o...o
-.o.o.
-..o..
-`), 'I', '5x5 symmetric', true),
 	new Neighborhood(nbhdsFromStr(`
 ooooo
 o...o
@@ -268,40 +196,19 @@ o...o
 ooooo
 `), 'J', '5x5 symmetric', true),
 	new Neighborhood(nbhdsFromStr(`
+.ooo.
+o...o
+o...o
+o...o
+.ooo.
+`), 'F', '5x5 symmetric', true),
+	new Neighborhood(nbhdsFromStr(`
 oo.oo
 oo.oo
 .....
 oo.oo
 oo.oo
 `), 'K', '5x5 symmetric', true),
-	new Neighborhood(nbhdsFromStr(`
-oo.oo
-o.o.o
-.o.o.
-o.o.o
-oo.oo
-`), 'L', '5x5 symmetric', true),
-	new Neighborhood(nbhdsFromStr(`
-o.o.o
-.o.o.
-o...o
-.o.o.
-o.o.o
-`), 'M', '5x5 symmetric', true),
-	new Neighborhood(nbhdsFromStr(`
-o.o.o
-..o..
-oo.oo
-..o..
-o.o.o
-`), 'N', '5x5 symmetric', true),
-	new Neighborhood(nbhdsFromStr(`
-o...o
-.ooo.
-.o.o.
-.ooo.
-o...o
-`), 'Q', '5x5 symmetric', true),
 	new Neighborhood(nbhdsFromStr(`
 .ooo.
 oo.oo
@@ -311,60 +218,153 @@ oo.oo
 `), 'R', '5x5 symmetric', true),
 	new Neighborhood(nbhdsFromStr(`
 .ooo.
+ooooo
+oo.oo
+ooooo
+.ooo.
+`), 'AA', '5x5 symmetric', true),
+
+// iterate over all upper-left corner upper-triangular permutations of on/off and symmetrize them
+	new Neighborhood(nbhdsFromStr(`
+o...o
+.....
+.....
+.....
+o...o
+`), 'A', '5x5 symmetric', false),
+	new Neighborhood(nbhdsFromStr(`
+.o.o.
+o...o
+.....
+o...o
+.o.o.
+`), 'B', '5x5 symmetric', false),
+	new Neighborhood(nbhdsFromStr(`
+..o..
+.....
+o...o
+.....
+..o..
+`), 'C', '5x5 symmetric', false),
+	new Neighborhood(nbhdsFromStr(`
+oo.oo
+o...o
+.....
+o...o
+oo.oo
+`), 'C', '5x5 symmetric', false),
+	new Neighborhood(nbhdsFromStr(`
+o.o.o
+.....
+o...o
+.....
+o.o.o
+`), 'D', '5x5 symmetric', false),
+	new Neighborhood(nbhdsFromStr(`
+o...o
+..o..
+.o.o.
+..o..
+o...o
+`), 'E', '5x5 symmetric', false),
+	new Neighborhood(nbhdsFromStr(`
+.o.o.
+oo.oo
+.....
+oo.oo
+.o.o.
+`), 'G', '5x5 symmetric', false),
+	new Neighborhood(nbhdsFromStr(`
+.o.o.
+o.o.o
+.o.o.
+o.o.o
+.o.o.
+`), 'H', '5x5 symmetric', false),
+	new Neighborhood(nbhdsFromStr(`
+..o..
+.o.o.
+o...o
+.o.o.
+..o..
+`), 'I', '5x5 symmetric', false),
+	new Neighborhood(nbhdsFromStr(`
+oo.oo
+o.o.o
+.o.o.
+o.o.o
+oo.oo
+`), 'L', '5x5 symmetric', false),
+	new Neighborhood(nbhdsFromStr(`
+o.o.o
+.o.o.
+o...o
+.o.o.
+o.o.o
+`), 'M', '5x5 symmetric', false),
+	new Neighborhood(nbhdsFromStr(`
+o.o.o
+..o..
+oo.oo
+..o..
+o.o.o
+`), 'N', '5x5 symmetric', false),
+	new Neighborhood(nbhdsFromStr(`
+o...o
+.ooo.
+.o.o.
+.ooo.
+o...o
+`), 'Q', '5x5 symmetric', false),
+	new Neighborhood(nbhdsFromStr(`
+.ooo.
 o.o.o
 oo.oo
 o.o.o
 .ooo.
-`), 'S', '5x5 symmetric', true),
+`), 'S', '5x5 symmetric', false),
 	new Neighborhood(nbhdsFromStr(`
 .o.o.
 ooooo
 .o.o.
 ooooo
 .o.o.
-`), 'T', '5x5 symmetric', true),
+`), 'T', '5x5 symmetric', false),
 	new Neighborhood(nbhdsFromStr(`
 ..o..
 .ooo.
 oo.oo
 .ooo.
 ..o..
-`), 'U', '5x5 symmetric', true),
+`), 'U', '5x5 symmetric', false),
 	new Neighborhood(nbhdsFromStr(`
 ooooo
 oo.oo
 o...o
 oo.oo
 ooooo
-`), 'V', '5x5 symmetric', true),
+`), 'V', '5x5 symmetric', false),
 	new Neighborhood(nbhdsFromStr(`
 ooooo
 o.o.o
 oo.oo
 o.o.o
 ooooo
-`), 'W', '5x5 symmetric', true),
+`), 'W', '5x5 symmetric', false),
 	new Neighborhood(nbhdsFromStr(`
 oo.oo
 ooooo
 .o.o.
 ooooo
 oo.oo
-`), 'Y', '5x5 symmetric', true),
+`), 'Y', '5x5 symmetric', false),
 	new Neighborhood(nbhdsFromStr(`
 o.o.o
 .ooo.
 oo.oo
 .ooo.
 o.o.o
-`), 'Z', '5x5 symmetric', true),
-	new Neighborhood(nbhdsFromStr(`
-.ooo.
-ooooo
-oo.oo
-ooooo
-.ooo.
-`), 'AA', '5x5 symmetric', true),
+`), 'Z', '5x5 symmetric', false),
 
 
 	new Neighborhood(makeDxys(3, (x,y) => { return true; }), 'aa', '7x7 square', false),
