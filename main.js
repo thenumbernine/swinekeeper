@@ -486,7 +486,6 @@ window.grid = grid;
 					padding : '0px',
 					margin : '0px',
 					textAlign : 'center',
-					backgroundColor : '#9f9f9f',
 					overflow : 'hidden',
 					whitespace : 'nowrap',
 					cursor : 'default',
@@ -502,6 +501,7 @@ window.grid = grid;
 				}
 			);
 			cell.dom = dom;
+			cell.hide();	//set hidden & background color
 			tr.appendChild(dom);
 			thiz.cells[i][j] = cell;
 		}
@@ -651,26 +651,30 @@ Grid.prototype = {
 		const percentUncovered = numRevealed / (this.width * this.height);
 		ids.percentUncovered.innerHTML = Math.floor(100*percentUncovered)+'%';
 	},
+	//static method, so use 'grid' global...
+	timerIntervalCallback : function() {
+		let dt = Math.floor((Date.now() - grid.startTime) / 1000);
+		let s = dt % 60;
+		dt -= s;
+		dt /= 60;
+		let m = dt % 60;
+		dt -= m;
+		dt /= 60;
+		let h = dt;
+		// hmm printf in javascript?
+		if (s < 10) s = '0'+s;
+		if (m < 10) m = '0'+m;
+		ids.timeTaken.innerHTML = h+':'+m+':'+s;
+	},
+	setTimerInterval : function() {
+		this.timerInterval = setInterval(this.timerIntervalCallback, 500);
+	},
 	checkFirstClick : function(cell) {
-		const thiz = this;
 		if (this.clicked) return;
 		this.clicked = true;
 
 		this.startTime = Date.now();
-		this.timerInterval = setInterval(() => {
-			let dt = Math.floor((Date.now() - thiz.startTime) / 1000);
-			let s = dt % 60;
-			dt -= s;
-			dt /= 60;
-			let m = dt % 60;
-			dt -= m;
-			dt /= 60;
-			let h = dt;
-			// hmm printf in javascript?
-			if (s < 10) s = '0'+s;
-			if (m < 10) m = '0'+m;
-			ids.timeTaken.innerHTML = h+':'+m+':'+s;
-		}, 500);
+		this.setTimerInterval();
 
 		this.setupMines(cell);
 
@@ -718,7 +722,6 @@ function* cellIter() {
 };
 
 function Cell(args) {
-	this.hidden = true;
 	this.flag = 0;
 }
 Cell.prototype = {
@@ -732,6 +735,10 @@ Cell.prototype = {
 			if (cell.mine) thiz.numTouch++;
 		});
 	},
+	hide : function() {
+		this.hidden = true;
+		this.dom.style.backgroundColor = '#9f9f9f';
+	},
 	click : function() {
 		if (grid.gamedone) return;
 		if (this.flag) return;
@@ -741,7 +748,48 @@ Cell.prototype = {
 		if (!this.hidden) return;
 		if (this.mine) {
 			grid.stopGame();
-			grid.revealAllMinesUponFailure();
+			ids.timeTaken.appendChild(Text(' YOU LOSE! '));
+			let giveup = undefined;
+			let undo = undefined;
+			const removeUndoOrGiveUp = () => {
+				removeFromParent(undo);
+				removeFromParent(giveup);
+				undo = undefined;
+				giveup = undefined;
+			};
+			undo = DOM(
+				'input',
+				{
+					type : 'button',
+					value : 'undo?',
+				},
+				null,
+				{
+					click : e => {
+						removeUndoOrGiveUp();
+						this.hide();
+						grid.gamedone = false;
+						grid.timerIntervalCallback();	//reset timeTaken div html
+						grid.setTimerInterval();
+					},
+				}
+			);
+			giveup = DOM(
+				'input',
+				{
+					type : 'button',
+					value : 'show mines',
+				},
+				null,
+				{
+					click : e => {
+						removeUndoOrGiveUp();
+						grid.revealAllMinesUponFailure();
+					},
+				}
+			);
+			ids.timeTaken.appendChild(undo);
+			ids.timeTaken.appendChild(giveup);		
 			// and add a red overlay or something
 			this.dom.style.backgroundColor = '#ff0000';
 		} else {
