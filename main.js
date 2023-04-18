@@ -832,7 +832,7 @@ Cell.prototype = {
 			if (flags == this.numTouch) color = '#00ff00';
 			this.nbhdIter(highlightCallback);
 		} else {
-			color = '#ffff00';
+			color = '#000000';
 			ignoreHidden = true;
 			this.invNbhdCells.forEach(highlightCallback);
 		}
