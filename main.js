@@ -135,17 +135,19 @@ function nbhdsFromStr(s) {
 	if (l[0] == '') l.splice(0, 1);
 	if (l[l.length-1] == '') l.splice(l.length-1, 1);
 	if (l.length & 1 == 0) throw "can't create nbhd from string if it has an even number of lines";
-	const m = l.length;	//2n+1
-	const n = (m - 1) >> 1;
-	const ns = [];
-	for (let j = 0; j < m; ++j) {
-		for (let i = 0; i < m; ++i) {
+	const h = l.length;	//2n+1
+	const w = l[0].length;
+	const hh = (h - 1) >> 1;
+	const hw = (w - 1) >> 1;
+	const n = [];
+	for (let j = 0; j < h; ++j) {
+		for (let i = 0; i < w; ++i) {
 			if (l[j].substr(i,1) == 'o') {
-				ns.push([i-n,j-n]);
+				n.push([i-hw,j-hh]);
 			}
 		}
 	}
-	return ns;
+	return n;
 }
 
 const nbhds = [
@@ -165,6 +167,20 @@ o.o
 ...
 o.o
 `), 'x', '3x3 diagonals', true),
+
+	//3x5
+	new Neighborhood(nbhdsFromStr(`
+ooo
+ooo
+o.o
+ooo
+ooo
+`), 'a', '3x5', true),
+	new Neighborhood(nbhdsFromStr(`
+ooooo
+oo.oo
+ooooo
+`), 'b', '5x3', true),
 
 	//5x5
 	new Neighborhood(nbhdsFromStr(`
