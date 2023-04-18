@@ -121,7 +121,7 @@ Neighborhood.prototype = {
 };
 
 function makeDxys(r, f) {
-	let n = [];
+	const n = [];
 	for (let dx = -r; dx <= r; ++dx) {
 		for (let dy = -r; dy <= r; ++dy) {
 			if (!(dx == 0 && dy == 0) && f(dx,dy)) n.push([dx,dy]);
@@ -130,28 +130,249 @@ function makeDxys(r, f) {
 	return n;
 }
 
+function nbhdsFromStr(s) {
+	const l = s.split('\n');
+	if (l[0] == '') l.splice(0, 1);
+	if (l[l.length-1] == '') l.splice(l.length-1, 1);
+	if (l.length & 1 == 0) throw "can't create nbhd from string if it has an even number of lines";
+	const m = l.length;	//2n+1
+	const n = (m - 1) >> 1;
+	const ns = [];
+	for (let j = 0; j < m; ++j) {
+		for (let i = 0; i < m; ++i) {
+			if (l[j].substr(i,1) == 'o') {
+				ns.push([i-n,j-n]);
+			}
+		}
+	}
+	return ns;
+}
+
 const nbhds = [
-	new Neighborhood(makeDxys(1, (x,y) => { return true; }), 'o', '3x3', true),
-	new Neighborhood(makeDxys(1, (x,y) => { return x==0 || y==0; }), '+', '3x3 cardinals', true),
-	new Neighborhood(makeDxys(1, (x,y) => { return x!=0 && y!=0; }), 'x', '3x3 diagonals', true),
-	
-	new Neighborhood(makeDxys(2, (x,y) => { return true; }), 'O', '5x5', true),
-	new Neighborhood(makeDxys(2, (x,y) => { return x==0 || y==0; }), 'P', '5x5 cardinals', true),
-	new Neighborhood(makeDxys(2, (x,y) => { return Math.abs(x)==Math.abs(y); }), 'X', '5x5 diagonals', true),
-	new Neighborhood(makeDxys(2, (x,y) => { return Math.abs(x)!=0 && Math.abs(y)!=0; }), 'F', '5x5 corners', true),
-	new Neighborhood(makeDxys(2, (x,y) => { return Math.abs(x)<=1; }), 'A', '3x5', true),
-	new Neighborhood(makeDxys(2, (x,y) => { return Math.abs(y)<=1; }), 'B', '5x3', true),
-	new Neighborhood(makeDxys(2, (x,y) => { return Math.abs(x) + Math.abs(y) <= 2; }), 'G', '5x5 diamond', true),
-	new Neighborhood(makeDxys(2, (x,y) => { return Math.abs(x)==2 || Math.abs(y)==2; }), 'C', '5x5 hollow', true),
-	new Neighborhood(makeDxys(2, (x,y) => { return Math.max(Math.abs(x), Math.abs(y)/2)==1; }), 'D', '3x5 hollow', true),
-	new Neighborhood(makeDxys(2, (x,y) => { return Math.max(Math.abs(x)/2, Math.abs(y))==1; }), 'E', '5x3 hollow', true),
-	new Neighborhood(makeDxys(2, (x,y) => { return Math.abs(x) + Math.abs(y) == 2; }), 'G', '5x5 hollow diamond', true),
-	
+	//3x3
+	new Neighborhood(nbhdsFromStr(`
+ooo
+o.o
+ooo
+`), 'o', '3x3', true),
+	new Neighborhood(nbhdsFromStr(`
+.o.
+o.o
+.o.
+`), '+', '3x3 cardinals', true),
+	new Neighborhood(nbhdsFromStr(`
+o.o
+...
+o.o
+`), 'x', '3x3 diagonals', true),
+
+	//5x5
+	new Neighborhood(nbhdsFromStr(`
+ooooo
+ooooo
+oo.oo
+ooooo
+ooooo
+`), 'O', '5x5', true),
+	new Neighborhood(nbhdsFromStr(`
+..o..
+..o..
+oo.oo
+..o..
+..o..
+`), 'P', '5x5 cardinals', true),
+	new Neighborhood(nbhdsFromStr(`
+o...o
+.o.o.
+.....
+.o.o.
+o...o
+`), 'X', '5x5 diagonals', true),
+
+// iterate over all upper-left corner upper-triangular permutations of on/off and symmetrize them
+	new Neighborhood(nbhdsFromStr(`
+o...o
+.....
+.....
+.....
+o...o
+`), 'A', '5x5 symmetric', true),
+	new Neighborhood(nbhdsFromStr(`
+.o.o.
+o...o
+.....
+o...o
+.o.o.
+`), 'B', '5x5 symmetric', true),
+	new Neighborhood(nbhdsFromStr(`
+..o..
+.....
+o...o
+.....
+..o..
+`), 'C', '5x5 symmetric', true),
+	new Neighborhood(nbhdsFromStr(`
+oo.oo
+o...o
+.....
+o...o
+oo.oo
+`), 'C', '5x5 symmetric', true),
+	new Neighborhood(nbhdsFromStr(`
+o.o.o
+.....
+o...o
+.....
+o.o.o
+`), 'D', '5x5 symmetric', true),
+	new Neighborhood(nbhdsFromStr(`
+o...o
+..o..
+.o.o.
+..o..
+o...o
+`), 'E', '5x5 symmetric', true),
+	new Neighborhood(nbhdsFromStr(`
+.ooo.
+o...o
+o...o
+o...o
+.ooo.
+`), 'F', '5x5 symmetric', true),
+	new Neighborhood(nbhdsFromStr(`
+.o.o.
+oo.oo
+.....
+oo.oo
+.o.o.
+`), 'G', '5x5 symmetric', true),
+	new Neighborhood(nbhdsFromStr(`
+.o.o.
+o.o.o
+.o.o.
+o.o.o
+.o.o.
+`), 'H', '5x5 symmetric', true),
+	new Neighborhood(nbhdsFromStr(`
+..o..
+.o.o.
+o...o
+.o.o.
+..o..
+`), 'I', '5x5 symmetric', true),
+	new Neighborhood(nbhdsFromStr(`
+ooooo
+o...o
+o...o
+o...o
+ooooo
+`), 'J', '5x5 symmetric', true),
+	new Neighborhood(nbhdsFromStr(`
+oo.oo
+oo.oo
+.....
+oo.oo
+oo.oo
+`), 'K', '5x5 symmetric', true),
+	new Neighborhood(nbhdsFromStr(`
+oo.oo
+o.o.o
+.o.o.
+o.o.o
+oo.oo
+`), 'L', '5x5 symmetric', true),
+	new Neighborhood(nbhdsFromStr(`
+o.o.o
+.o.o.
+o...o
+.o.o.
+o.o.o
+`), 'M', '5x5 symmetric', true),
+	new Neighborhood(nbhdsFromStr(`
+o.o.o
+..o..
+oo.oo
+..o..
+o.o.o
+`), 'N', '5x5 symmetric', true),
+	new Neighborhood(nbhdsFromStr(`
+o...o
+.ooo.
+.o.o.
+.ooo.
+o...o
+`), 'Q', '5x5 symmetric', true),
+	new Neighborhood(nbhdsFromStr(`
+.ooo.
+oo.oo
+o...o
+oo.oo
+.ooo.
+`), 'R', '5x5 symmetric', true),
+	new Neighborhood(nbhdsFromStr(`
+.ooo.
+o.o.o
+oo.oo
+o.o.o
+.ooo.
+`), 'S', '5x5 symmetric', true),
+	new Neighborhood(nbhdsFromStr(`
+.o.o.
+ooooo
+.o.o.
+ooooo
+.o.o.
+`), 'T', '5x5 symmetric', true),
+	new Neighborhood(nbhdsFromStr(`
+..o..
+.ooo.
+oo.oo
+.ooo.
+..o..
+`), 'U', '5x5 symmetric', true),
+	new Neighborhood(nbhdsFromStr(`
+ooooo
+oo.oo
+o...o
+oo.oo
+ooooo
+`), 'V', '5x5 symmetric', true),
+	new Neighborhood(nbhdsFromStr(`
+ooooo
+o.o.o
+oo.oo
+o.o.o
+ooooo
+`), 'W', '5x5 symmetric', true),
+	new Neighborhood(nbhdsFromStr(`
+oo.oo
+ooooo
+.o.o.
+ooooo
+oo.oo
+`), 'Y', '5x5 symmetric', true),
+	new Neighborhood(nbhdsFromStr(`
+o.o.o
+.ooo.
+oo.oo
+.ooo.
+o.o.o
+`), 'Z', '5x5 symmetric', true),
+	new Neighborhood(nbhdsFromStr(`
+.ooo.
+ooooo
+oo.oo
+ooooo
+.ooo.
+`), 'AA', '5x5 symmetric', true),
+
+
 	new Neighborhood(makeDxys(3, (x,y) => { return true; }), 'aa', '7x7 square', false),
 	new Neighborhood(makeDxys(3, (x,y) => { return Math.abs(x)>1 || Math.abs(y)>1; }), 'aa', '7x7 square 2-thick', false),
 	new Neighborhood(makeDxys(3, (x,y) => { return Math.abs(x)==3 || Math.abs(y)==3; }), 'aa', '7x7 hollow square', false),
 	new Neighborhood(makeDxys(3, (x,y) => { return Math.abs(x) + Math.abs(y) == 3; }), 'aa', '7x7 hollow diamond', false),
 
+//asymmetric?
 	new Neighborhood([[-1,1]], 'ul', 'up left', false),
 	new Neighborhood([[1,1]], 'ur', 'up right', false),
 	new Neighborhood([[-1,-1]], 'dl', 'down left', false),
@@ -575,6 +796,7 @@ Cell.prototype = {
 	},
 	addNbhdSymbolText : function() {
 		if (!ids.showcellnbhd.checked) return;
+		if (this.mine) return;
 		this.nbhdSymbolText = Text(''+this.nbhd.symbol);
 		this.dom.appendChild(this.nbhdSymbolText);
 	},
