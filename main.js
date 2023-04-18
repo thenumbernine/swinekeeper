@@ -125,6 +125,11 @@ const nbhds = [
 	new Neighborhood(makeDxys(2, (x,y) => { return Math.max(Math.abs(x), Math.abs(y)/2)==1; }), 'D', '3x5 hollow', true),
 	new Neighborhood(makeDxys(2, (x,y) => { return Math.max(Math.abs(x)/2, Math.abs(y))==1; }), 'E', '5x3 hollow', true),
 	new Neighborhood(makeDxys(2, (x,y) => { return Math.abs(x) + Math.abs(y) == 2; }), 'G', '5x5 hollow diamond', true),
+	
+	new Neighborhood(makeDxys(3, (x,y) => { return true; }), 'aa', '7x7 square', false),
+	new Neighborhood(makeDxys(3, (x,y) => { return Math.abs(x)>1 || Math.abs(y)>1; }), 'aa', '7x7 square 2-thick', false),
+	new Neighborhood(makeDxys(3, (x,y) => { return Math.abs(x)==3 || Math.abs(y)==3; }), 'aa', '7x7 hollow square', false),
+	new Neighborhood(makeDxys(3, (x,y) => { return Math.abs(x) + Math.abs(y) == 3; }), 'aa', '7x7 hollow diamond', false),
 
 	new Neighborhood([[-1,1]], 'ul', 'up left', false),
 	new Neighborhood([[1,1]], 'ur', 'up right', false),
@@ -204,17 +209,7 @@ window.grid = grid;
 		this.cells[i] = [];
 	}
 
-	const nbhdFFA = ids.qgmode.checked;
-
-	let allowedNbhds = [];
-	nbhds.forEach(n => {
-		if (n.input.checked) allowedNbhds.push(n);
-	});
-	if (!nbhdFFA && !allowedNbhds.length) throw "can't play without any allowed nbhds";
-
 	const cellSize = parseInt(ids.cellsize.value);
-
-	this.allCells = [];
 	ids.board.style.width = (this.width * cellSize)+'px';
 	for (let j = this.height-1; j >= 0; --j) {
 		const tr = DOM('tr');
@@ -244,79 +239,44 @@ window.grid = grid;
 						cell.setFlag();
 						e.preventDefault();
 					},
-					mouseenter : e => {
-						if (!ids.hints.checked) return;
-						
-						// properties for !cell.hidden
-						let color = '#ff0000';
-						let ignoreHidden = false;
-						
-						let highlightCallback = cell2 => {
-							if (ignoreHidden && cell2.hidden) return;
-							const overlay = DOM('div');
-							overlay.style.position = 'absolute';
-							const rect = cell2.dom.getBoundingClientRect();
-							const borderSize = 3;
-							overlay.style.left = (rect.x + window.scrollX) + 'px';
-							overlay.style.top = (rect.y + window.scrollY) + 'px';
-							overlay.style.width = (rect.width - 2*borderSize-1) + 'px';
-							overlay.style.height = (rect.width - 2*borderSize-1) + 'px';
-							overlay.style.border = borderSize+'px solid '+color;
-							// option ... put overlays on revealed tiles? or just dimly on revealed tiles...
-							overlay.style.opacity = ignoreHidden ? .5 : (cell2.hidden ? .8 : .3);
-							body.appendChild(overlay);
-							grid.nbhdOverlays.push(overlay);
-						};
-						if (!cell.hidden) { 
-							// option ... green overlay when all mines are marked?
-							let flags = 0;
-							cell.nbhdIter(cell2 => {
-								if (cell2.flag == 1) flags++;
-							});
-							if (flags == cell.numTouch) color = '#00ff00';
-							cell.nbhdIter(highlightCallback);
-						} else {
-							color = '#ffff00';
-							ignoreHidden = true;
-							cell.invNbhdCells.forEach(highlightCallback);
-						}
-					},
+					mouseenter : e => { cell.makeNbhdOverlays(); },
 					mouseleave : e => { grid.clearNbhdOverlays(); },
 				}
 			);
 			cell.dom = dom;
-			let nbhd = !nbhdFFA
-				? pickRandom(allowedNbhds)
-				: createRandomNeighborhood(cell.pos);
-			cell.nbhd = nbhd;
-			if (!cell.nbhd) throw "couldn't find nbhd "+nbhd;
 			tr.appendChild(dom);
-			thiz.allCells.push(cell);
 			thiz.cells[i][j] = cell;
 		}
 	}
+
+	this.allCells = [];
+	this.forEachCell(cell => {
+		thiz.allCells.push(cell);
+	});
 	
-	// TODO set neighborhoods *here* afterwar cell has been assigned
+	// set neighborhoods here after cell has been assigned
 	// so we have cell.pos for the qg nbhd generator
-
-	// now set random mines
-	this.notMineCells = this.allCells.slice();
-	this.numMines = Math.ceil(this.notMineCells.length * parseFloat(ids.percentMines.value) / 100);
-	for (let i = 0; i < this.numMines; ++i) {
-		this.popRandomNonMineCell().mine = true;
-	}
-	this.minesUnmarked = this.numMines;
-	ids.minesleft.innerHTML = ''+grid.minesUnmarked;
 	
-	this.numHidden = this.width * this.height;
-	// refresh after setting numHidden and minesUnmarked
-	this.refreshUncoveredPercent();
+	const nbhdFFA = ids.qgmode.checked;
+	let allowedNbhds = [];
+	nbhds.forEach(n => {
+		if (n.input.checked) allowedNbhds.push(n);
+	});
+	if (!nbhdFFA && !allowedNbhds.length) throw "can't play without any allowed nbhds";
 
+	this.forEachCell(cell => {
+		let nbhd = !nbhdFFA
+			? pickRandom(allowedNbhds)
+			: createRandomNeighborhood(cell.pos);
+		cell.nbhd = nbhd;
+		if (!cell.nbhd) throw "couldn't find nbhd "+nbhd;
+	});
 
-	// store nbhd cells
+	// build nbhdCells based on nbhd
+	
 	this.forEachCell(cell => {
 		cell.nbhdCells = [];
-		cell.nbhdIter(cell2 => {
+		cell.nbhd.gridPtIter(cell.pos, cell2 => {
 			cell.nbhdCells.push(cell2);
 		});
 	});
@@ -329,23 +289,6 @@ window.grid = grid;
 			cell2.invNbhdCells.push(cell);
 		});
 	});
-	/* TODO if any cel's invNbhdCells is zero then that means no other cell indicates what this cell is
-	  and you should probably re-roll some of its neighbors until that changes.
-	 another method could be to do this:
-	 	for each cell
-			if no neighbors are looking at it yet:
-				repeat
-					pick a random enabled neighborhood pattern
-						pick an inverse (pick a offset in the nbhd, place that at the cell, look at the nbhd origin)
-							if that neighbor hasn't been assigned a neighborhood
-							then set that neighboring cell to that neighborhood.
-				... until we finally set a neighbor's neighborhood.
-		then with whatever cells haven't been assigned , give them random nbhds.
-	this will guaranteee that all cells are looked at by at least one cell
-	*/
-
-	// now count neighboring mines
-	this.forEachCell(cell => cell.calculateNumTouch());
 }
 Grid.prototype = {
 	popRandomNonMineCell : function() {
@@ -354,11 +297,75 @@ Grid.prototype = {
 		return this.notMineCells.splice(parseInt(Math.random() * n), 1)[0];
 	},
 	forEachCell : function(f) {
-		grid.cells.forEach((col, i) => {
+		this.cells.forEach((col, i) => {
 			col.forEach((cell, j) => {
 				f(cell, i, j);
 			});
 		});
+	},
+	setupMines : function(firstClickCell) {
+		const thiz = this;
+		// now set random mines
+		this.notMineCells = this.allCells.slice();
+	
+		// create a nbhd of cells around our first-click cell
+		const safeCells = [];
+		/* pick a 3x3 neighborhood aroudn the first cell * /
+		new Neighborhood(makeDxys(1, (x,y) => { return true; })).gridPtIter(firstClickCell.pos, cell => {
+			safeCells.push(cell);
+		});
+		/**/
+		/* use the cell's own neighborhood
+		-- guarantee first click always propagates */
+		firstClickCell.nbhdCells.forEach(cell => {
+			safeCells.push(cell);
+		});
+		/**/
+		
+		// remove that neighborhood from the choices
+		safeCells.forEach(cell => {
+			const i = thiz.notMineCells.indexOf(cell);
+			if (i == -1) throw "here";
+			thiz.notMineCells.splice(i, 1);
+		});
+		
+		// distribute mines
+		this.numMines = 0;
+		const targetNumMines = Math.ceil(this.allCells.length * parseFloat(ids.percentMines.value) / 100);
+		for (let i = 0; i < targetNumMines; ++i) {
+			const cell = this.popRandomNonMineCell();
+			if (!cell) break;
+			cell.mine = true;
+			++this.numMines;
+		}
+		// re-add the removed safe cells
+		safeCells.forEach(cell => { thiz.notMineCells.push(cell); });
+		
+		this.minesUnmarked = this.numMines;
+		ids.minesleft.innerHTML = ''+grid.minesUnmarked;
+		
+		this.numHidden = this.width * this.height;
+		// refresh after setting numHidden and minesUnmarked
+		this.refreshUncoveredPercent();
+
+		/* TODO if any cel's invNbhdCells is zero then that means no other cell indicates what this cell is
+		  and you should probably re-roll some of its neighbors until that changes.
+		 another method could be to do this:
+			for each cell
+				if no neighbors are looking at it yet:
+					repeat
+						pick a random enabled neighborhood pattern
+							pick an inverse (pick a offset in the nbhd, place that at the cell, look at the nbhd origin)
+								if that neighbor hasn't been assigned a neighborhood
+								then set that neighboring cell to that neighborhood.
+					... until we finally set a neighbor's neighborhood.
+			then with whatever cells haven't been assigned , give them random nbhds.
+		this will guaranteee that all cells are looked at by at least one cell
+		*/
+
+		// now count neighboring mines
+		this.forEachCell(cell => cell.calculateNumTouch());
+
 	},
 	// if a mine goes off we call this on all cells
 	revealAllMinesUponFailure : function() {
@@ -389,7 +396,7 @@ Grid.prototype = {
 		ids.percentUncovered.innerHTML = Math.floor(100*percentUncovered)+'%';
 	},
 	checkFirstClick : function(cell) {
-		var thiz = this;
+		const thiz = this;
 		if (this.clicked) return;
 		this.clicked = true;
 
@@ -409,6 +416,7 @@ Grid.prototype = {
 			ids.timeTaken.innerHTML = h+':'+m+':'+s;
 		}, 500);
 
+		this.setupMines(cell);
 
 		if (cell.mine) {
 			cell.mine = false;
@@ -458,11 +466,8 @@ function Cell(args) {
 	this.flag = 0;
 }
 Cell.prototype = {
-	// used to build nbhdCells so don't depend on nbhdCells here ...
 	nbhdIter : function(f) {
-		this.nbhd.gridPtIter(this.pos, cell => {
-			f(cell);
-		});
+		this.nbhdCells.forEach(f);
 	},
 	calculateNumTouch : function() {
 		let thiz = this;
@@ -546,6 +551,43 @@ Cell.prototype = {
 		grid.numHidden--;
 		if (!dontChangeUncovered) {
 			grid.refreshUncoveredPercent();
+		}
+	},
+	makeNbhdOverlays : function() {
+		if (!ids.hints.checked) return;
+		
+		// properties for !cell.hidden
+		let color = '#ff0000';
+		let ignoreHidden = false;
+		
+		let highlightCallback = cell2 => {
+			if (ignoreHidden && cell2.hidden) return;
+			const overlay = DOM('div');
+			overlay.style.position = 'absolute';
+			const rect = cell2.dom.getBoundingClientRect();
+			const borderSize = 3;
+			overlay.style.left = (rect.x + window.scrollX) + 'px';
+			overlay.style.top = (rect.y + window.scrollY) + 'px';
+			overlay.style.width = (rect.width - 2*borderSize-1) + 'px';
+			overlay.style.height = (rect.width - 2*borderSize-1) + 'px';
+			overlay.style.border = borderSize+'px solid '+color;
+			// option ... put overlays on revealed tiles? or just dimly on revealed tiles...
+			overlay.style.opacity = ignoreHidden ? .5 : (cell2.hidden ? .8 : .3);
+			body.appendChild(overlay);
+			grid.nbhdOverlays.push(overlay);
+		};
+		if (!this.hidden) { 
+			// option ... green overlay when all mines are marked?
+			let flags = 0;
+			this.nbhdIter(cell2 => {
+				if (cell2.flag == 1) flags++;
+			});
+			if (flags == this.numTouch) color = '#00ff00';
+			this.nbhdIter(highlightCallback);
+		} else {
+			color = '#ffff00';
+			ignoreHidden = true;
+			this.invNbhdCells.forEach(highlightCallback);
 		}
 	},
 };
