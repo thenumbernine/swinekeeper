@@ -210,35 +210,35 @@ o...o
 o...o
 o...o
 ooooo
-`), 'J', '5x5 symmetric', true),
+`), 'J', '5x5 symmetric', false),
 	new Neighborhood(nbhdsFromStr(`
 .ooo.
 o...o
 o...o
 o...o
 .ooo.
-`), 'F', '5x5 symmetric', true),
+`), 'F', '5x5 symmetric', false),
 	new Neighborhood(nbhdsFromStr(`
 oo.oo
 oo.oo
 .....
 oo.oo
 oo.oo
-`), 'K', '5x5 symmetric', true),
+`), 'K', '5x5 symmetric', false),
 	new Neighborhood(nbhdsFromStr(`
 .ooo.
 oo.oo
 o...o
 oo.oo
 .ooo.
-`), 'R', '5x5 symmetric', true),
+`), 'R', '5x5 symmetric', false),
 	new Neighborhood(nbhdsFromStr(`
 .ooo.
 ooooo
 oo.oo
 ooooo
 .ooo.
-`), 'AA', '5x5 symmetric', true),
+`), 'AA', '5x5 symmetric', false),
 
 // iterate over all upper-left corner upper-triangular permutations of on/off and symmetrize them
 	new Neighborhood(nbhdsFromStr(`
