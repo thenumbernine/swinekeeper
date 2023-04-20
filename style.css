@@ -1,0 +1,52 @@
+body {
+	overflow : scroll;
+}
+
+#neighborInfoDiv {
+	float : right;
+	width : 40%;
+	text-align : right;
+}
+
+#nbhddiv {
+	overflow-x : hidden;
+	overflow-y : scroll;
+	height : 6em;
+}
+
+#helpdiv {
+	display : none;
+	border : 1px solid black;
+	margin : 3px;
+	padding : 3px;
+	width : 55%;
+}
+
+#timeTakenWrapper {
+	text-align : center;
+}
+
+#percentUncoveredWrapper {
+	text-align : center;
+}
+
+#minesLeftWrapper {
+	text-align : center;
+}
+
+#board {
+	margin : auto;
+	border-spacing : 0px;
+	border-collapse : collapse;
+	table-layout : fixed;
+	-webkit-user-select: none; /* Safari */
+	-ms-user-select: none; /* IE 10 and IE 11 */
+	user-select: none; /* Standard syntax */
+
+	/* disable double-tap-to-zoom */
+	/* https://stackoverflow.com/questions/10614481/disable-double-tap-zoom-option-in-browser-on-touch-devices/28752323 */
+	touch-action : manipulation;
+	/* another suggestion: */
+	/* pointer-events: none */
+	/* another suggestion: touchent event preventDefault */
+}

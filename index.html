@@ -4,17 +4,18 @@
 		<meta charset='utf8'/>
 		<title>SwineKeeper</title>
 		<script type='module' src='main.js' defer></script>
+		<link rel='stylesheet' href='style.css'/>
 	</head>
-	<body style='overflow:scroll'>
+	<body>
 	
-	<div style='float:right; width:40%; text-align:right'>
+	<div id='neighborInfoDiv'>
 	neighborhoods:<br>
-	<div id='nbhddiv' style='overflow-x:hidden; overflow-y:scroll; height:6em'>
+	<div id='nbhddiv'>
 	</div>
 	</div>
 
 	<input id='help' type='checkbox'/> Show Help<br>
-	<div id='helpdiv' style='display:none; border:1px solid black; margin:3px; padding:3px; width:55%'>
+	<div id='helpdiv'>
 		HELP:<br>
 		This is just like original minesweeper but with varying detection neighborhoods.<Br>
 		<br>
@@ -87,18 +88,19 @@
 	<input id='percentMines' type='text' value='15'/> percent mines<br>
 	<input id='cellsize' type='text' value='24'/> cell size<br>
 	<input id='hints' type='checkbox' checked='checked'/> mouse hover hints<br>
+	<input id='twoclicks' type='checkbox'/> two clicks to reveal tile (first click shows hints)<br>
 	<input id='showcellnbhd' type='checkbox'/> show neighborhood on cell<br>
 	<input id='qgmode' type='checkbox'/> QUANTUM GRAVITY MODE<br>
 	<input id='torus' type='checkbox'/> torus<br>
 	<br>
 
 	<button id='newgame'>New Game</button><br>
-	<div style='text-align:center'><span id='timeTaken'>...</span></div>
-	<div style='text-align:center'><span id='percentUncovered'></span> Uncovered</div>
-	<div style='text-align:center'>Mines Left: <span id='minesleft'></span></div>
+	<div id='timeTakenWrapper'><span id='timeTaken'>...</span></div>
+	<div id='percentUncoveredWrapper'><span id='percentUncovered'></span> Uncovered</div>
+	<div id='minesLeftWrapper'>Mines Left: <span id='minesleft'></span></div>
 	<br>
 
-	<table id='board' style='margin:auto; border-spacing:0px; border-collapse:collapse; table-layout:fixed'></table>
+	<table id='board'></table>
 	
 	</body>
 </html>

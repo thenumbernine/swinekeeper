@@ -492,13 +492,33 @@ window.grid = grid;
 					cursor : 'default',
 				},
 				{
-					click : e => { cell.click(); },
+					click : e => {
+console.log('clicked', cell, grid.clickedCell);
+						if (!ids.twoclicks.checked || !grid.clicked) {
+							cell.click();
+						} else {
+							if (grid.clickedCell != cell) {
+								grid.clickedCell = cell;
+								cell.makeNbhdOverlays();
+							} else {
+								grid.clickedCell = undefined;
+								grid.clearNbhdOverlays();
+								cell.click();
+							}
+						}
+					},
 					contextmenu : e => {
 						cell.setFlag();
 						e.preventDefault();
 					},
-					mouseenter : e => { cell.makeNbhdOverlays(); },
-					mouseleave : e => { grid.clearNbhdOverlays(); },
+					mouseenter : e => {
+						if (ids.twoclicks.checked) return;
+						cell.makeNbhdOverlays();
+					},
+					mouseleave : e => {
+						if (ids.twoclicks.checked) return;
+						grid.clearNbhdOverlays();
+					},
 				}
 			);
 			cell.dom = dom;
@@ -548,6 +568,13 @@ window.grid = grid;
 			cell2.invNbhdCells.push(cell);
 		});
 	});
+
+	//just for display
+	// upon first click these get populated
+	this.numHidden = this.width * this.height;
+	this.numMines = 0;
+	this.minesUnmarked = 0;
+	this.refreshUncoveredPercent();
 }
 Grid.prototype = {
 	popRandomNonMineCell : function() {
@@ -624,7 +651,6 @@ Grid.prototype = {
 
 		// now count neighboring mines
 		this.forEachCell(cell => cell.calculateNumTouch());
-
 	},
 	// if a mine goes off we call this on all cells
 	revealAllMinesUponFailure : function() {
@@ -871,6 +897,8 @@ Cell.prototype = {
 	},
 	makeNbhdOverlays : function() {
 		if (!ids.hints.checked) return;
+
+		grid.clearNbhdOverlays();
 		
 		// properties for !cell.hidden
 		let color = '#ff0000';
@@ -878,17 +906,23 @@ Cell.prototype = {
 		
 		let highlightCallback = cell2 => {
 			if (ignoreHidden && cell2.hidden) return;
-			const overlay = DOM('div');
-			overlay.style.position = 'absolute';
 			const rect = cell2.dom.getBoundingClientRect();
 			const borderSize = 3;
-			overlay.style.left = (rect.x + window.scrollX) + 'px';
-			overlay.style.top = (rect.y + window.scrollY) + 'px';
-			overlay.style.width = (rect.width - 2*borderSize-1) + 'px';
-			overlay.style.height = (rect.width - 2*borderSize-1) + 'px';
-			overlay.style.border = borderSize+'px solid '+color;
-			// option ... put overlays on revealed tiles? or just dimly on revealed tiles...
-			overlay.style.opacity = ignoreHidden ? .5 : (cell2.hidden ? .8 : .3);
+			const overlay = DOM(
+				'div',
+				undefined,
+				{
+					position : 'absolute',
+					left : (rect.x + window.scrollX) + 'px',
+					top : (rect.y + window.scrollY) + 'px',
+					width : (rect.width - 2*borderSize-1) + 'px',
+					height : (rect.width - 2*borderSize-1) + 'px',
+					border : borderSize+'px solid '+color,
+					// option ... put overlays on revealed tiles? or just dimly on revealed tiles...
+					opacity : ignoreHidden ? .5 : (cell2.hidden ? .8 : .3),
+					pointerEvents : 'none',
+				},
+			);
 			body.appendChild(overlay);
 			grid.nbhdOverlays.push(overlay);
 		};
