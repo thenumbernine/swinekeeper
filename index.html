@@ -20,30 +20,27 @@
 		This is just like original minesweeper but with varying detection neighborhoods.<Br>
 		<br>
 		
-		ORIGINAL MINESWEEPER HELP:<br>
-		<Br>
-
-		In the original minesweeper, you click tiles to reveal whether they have mines underneath them or not.<br>
-		If they do, and you click them, you die, game over.<br>
-		If they don't, then they will reveal a number.<br>
-		The number will tell you how many mines are surrounding the tile you clicked,
-		i.e. the number of mines in the 3x3 neighborhood around the tile.<br>
-		You could think of the tile as having a mine detector that was a 3x3 neighborhood around the tile.<br>
+		Click to reveal if a tile has a mine or not.<br>
+		If it does then you lose.<br>
+		If it does not then it will show you a number telling you how many mines are in its neighborhood.<br>
 		<br>
 
-		You are also able to flag tiles as potential mines using the right-click button.<Br>
-		<Br>
-
-		You win the game when you reveal all the tiles that don't have mines under them.<br>
+		Right-click to place a flag over a mine.<br>
+		Mobile users: long-press to place a flag.<br>
+		Flagged tiles cannot be clicked (and accidentally detonated).<br>
 		<br>
 
+		Hover your mouse over a tile to show a tile's neighborhood of detection.<br>
+		In original minesweeper, this neighborhood consisted of just the 3x3 tiles surrounding it.<br>
+		in Swinekeeper, the detection neighborhoods vary per tile.<br>
+		<br>
+		
+		In mobile mode, there is no mouse-over, so I provided the "two clicks to reveal..." option.<br>
+		With this enabled, the first click on a tile will reveal its neighborhood, and the second click will reveal the tile.<br>
+		<br>
+		
 		<hr>
-		<br>
 
-		SWINEKEEPER:<br>
-		<br>
-
-		In this version the tiles will have arbitrary neighborhoods.<br>
 		You can choose on the right column under 'neighborhoods' which possible neighborhoods to allow.<br>
 		If you uncheck all of them except the '3x3' option then you will get original minesweeper.<br>
 		<br>
@@ -86,12 +83,14 @@
 	<input id='width' type='text' value='30'/> width<br>
 	<input id='height' type='text' value='20'/> height<br>
 	<input id='percentMines' type='text' value='15'/> percent mines<br>
-	<input id='cellsize' type='text' value='24'/> cell size<br>
-	<input id='hints' type='checkbox' checked='checked'/> mouse hover hints<br>
-	<input id='twoclicks' type='checkbox'/> two clicks to reveal tile (first click shows hints)<br>
-	<input id='showcellnbhd' type='checkbox'/> show neighborhood on cell<br>
-	<input id='qgmode' type='checkbox'/> QUANTUM GRAVITY MODE<br>
-	<input id='torus' type='checkbox'/> torus<br>
+	<input id='cellsize' type='text' value='24'/> tile size<br>
+	<input id='hints' type='checkbox' checked='checked'/> mouse hover to show detection neighborhood.<br>
+	<input id='mobileMode' type='checkbox'/> mobile mode (click a revealed tile to shows its neighborhood).<br>
+	<input id='showInvNbhds' type='checkbox'/> ... first click a hidden tile to show which neighbors touch it.<br>
+	<input id='flagUnknown' type='checkbox'/> allow placing ? flags on tiles.<br>
+	<input id='showcellnbhd' type='checkbox'/> show neighborhood symbol on revealed tiles.<br>
+	<input id='qgmode' type='checkbox'/> QUANTUM GRAVITY MODE (neighborhoods are completely random per tile).<br>
+	<input id='torus' type='checkbox'/> torus board (detection neighborhoods wrap around sides).<br>
 	<br>
 
 	<button id='newgame'>New Game</button><br>

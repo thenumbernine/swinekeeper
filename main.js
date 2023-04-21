@@ -48,7 +48,7 @@ ids.qgmode.addEventListener('change', changedConfig);
 ids.torus.addEventListener('change', changedConfig);
 
 ids.help.addEventListener('change', e => {
-	if (ids.helpdiv.style.display == 'none') {
+	if (ids.help.checked) {
 		ids.helpdiv.style.display = 'block';
 	} else {
 		ids.helpdiv.style.display = 'none';
@@ -68,6 +68,16 @@ ids.showcellnbhd.addEventListener('change', e => {
 			} else {
 				cell.addNbhdSymbolText();
 			}
+		}
+	});
+});
+
+ids.flagUnknown.addEventListener('change', e => {
+	if (!grid) return;
+	grid.forEachCell(cell => {
+		if (cell.flag == 2) {
+			cell.flag = 0;
+			cell.refreshFlag();
 		}
 	});
 });
@@ -493,17 +503,32 @@ window.grid = grid;
 				},
 				{
 					click : e => {
-console.log('clicked', cell, grid.clickedCell);
-						if (!ids.twoclicks.checked || !grid.clicked) {
+						// if mobile is off 
+						// or if it's the first click
+						// then just do a click
+						if (!ids.mobileMode.checked ||
+							// do I want mobile-mode to allow first-click to show neighborhood on *all tiles*?
+							//  or just on revealed tiles?
+							!grid.clicked
+						) {
+							grid.clearNbhdOverlays();
 							cell.click();
 						} else {
-							if (grid.clickedCell != cell) {
-								grid.clickedCell = cell;
-								cell.makeNbhdOverlays();
-							} else {
-								grid.clickedCell = undefined;
+							// if ids.showInvNbhds is off then just do a click
+							if (!ids.showInvNbhds.checked &&
+								cell.hidden
+							) {
 								grid.clearNbhdOverlays();
 								cell.click();
+							} else {
+								if (grid.clickedCell != cell) {
+									grid.clickedCell = cell;
+									cell.makeNbhdOverlays();
+								} else {
+									grid.clickedCell = undefined;
+									grid.clearNbhdOverlays();
+									cell.click();
+								}
 							}
 						}
 					},
@@ -512,11 +537,11 @@ console.log('clicked', cell, grid.clickedCell);
 						e.preventDefault();
 					},
 					mouseenter : e => {
-						if (ids.twoclicks.checked) return;
+						if (ids.mobileMode.checked) return;
 						cell.makeNbhdOverlays();
 					},
 					mouseleave : e => {
-						if (ids.twoclicks.checked) return;
+						if (ids.mobileMode.checked) return;
 						grid.clearNbhdOverlays();
 					},
 				}
@@ -850,8 +875,11 @@ Cell.prototype = {
 		// 2 = uncertain
 		if (this.flag == 1) grid.minesUnmarked++;
 		this.flag++;
-		this.flag %= 3;
+		this.flag %= (ids.flagUnknown.checked ? 3 : 2);
 		if (this.flag == 1) grid.minesUnmarked--;
+		this.refreshFlag();
+	},
+	refreshFlag : function() {
 		ids.minesleft.innerHTML = ''+grid.minesUnmarked;
 		this.dom.innerHTML = (['', 'F', '?'])[this.flag];
 		grid.refreshUncoveredPercent();
