@@ -40,6 +40,8 @@ document.querySelectorAll('[id]').forEach(n => {
 });
 window.ids = ids;
 
+ids.mobileMode.checked = window.ontouchstart !== undefined;
+
 function changedConfig(e) {
 	if (!grid.clicked) newgame();
 }
