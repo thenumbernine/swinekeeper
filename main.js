@@ -511,6 +511,7 @@ window.grid = grid;
 							//  or just on revealed tiles?
 							!grid.clicked
 						) {
+							grid.clickedCell = undefined;
 							grid.clearNbhdOverlays();
 							cell.click();
 						} else {
@@ -518,6 +519,7 @@ window.grid = grid;
 							if (!ids.showInvNbhds.checked &&
 								cell.hidden
 							) {
+								grid.clickedCell = undefined;
 								grid.clearNbhdOverlays();
 								cell.click();
 							} else {
