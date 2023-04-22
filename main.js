@@ -481,7 +481,7 @@ window.grid = grid;
 	}
 
 	const cellSize = parseInt(ids.cellsize.value);
-	ids.board.style.width = (this.width * cellSize)+'px';
+	ids.board.style.width = (this.width * cellSize) + 'px';
 	for (let j = this.height-1; j >= 0; --j) {
 		const tr = DOM('tr');
 		tr.style.width = (this.width * cellSize) + 'px';
@@ -504,6 +504,7 @@ window.grid = grid;
 					cursor : 'default',
 				},
 				{
+					// TODO this is getting out of hand.  make two click functions or something, or just merge this behavior with .click()?
 					click : e => {
 						// if mobile is off 
 						// or if it's the first click
@@ -513,23 +514,33 @@ window.grid = grid;
 							//  or just on revealed tiles?
 							!grid.clicked
 						) {
-							grid.clickedCell = undefined;
+							grid.overlayTargetCell = undefined;
 							grid.clearNbhdOverlays();
 							cell.click();
-						} else {
-							// if ids.showInvNbhds is off then just do a click
+						} else {	//mobileMode==true && grid.clicked here:
+							// if ids.showInvNbhds is off and the cell is hidden ... then just do a click
 							if (!ids.showInvNbhds.checked &&
 								cell.hidden
 							) {
-								grid.clickedCell = undefined;
-								grid.clearNbhdOverlays();
-								cell.click();
-							} else {
-								if (grid.clickedCell != cell) {
-									grid.clickedCell = cell;
+								if (!cell.flag) {	// if no flag then do a click
+									grid.overlayTargetCell = undefined;
+									grid.clearNbhdOverlays();
+									cell.click();
+								} else {	// if flag then click won't activate anyways so ... show nbhd
+									if (grid.overlayTargetCell != cell) {
+										grid.overlayTargetCell = cell;
+										cell.makeNbhdOverlays();
+									} else {
+										grid.overlayTargetCell = undefined;
+										grid.clearNbhdOverlays();
+									}
+								}
+							} else {	// showInvNbhds is on or the cell is revealed
+								if (grid.overlayTargetCell != cell) {
+									grid.overlayTargetCell = cell;
 									cell.makeNbhdOverlays();
 								} else {
-									grid.clickedCell = undefined;
+									grid.overlayTargetCell = undefined;
 									grid.clearNbhdOverlays();
 									cell.click();
 								}
@@ -780,6 +791,17 @@ function* cellIter() {
 	}
 };
 
+const neighborNumberColors = [
+	'#C0ECCC',
+	'#E2F0CB',
+	'#B5EAD7',
+	'#C7CEEA',
+	'#A5C8E4',
+	'#F4CDA6',
+	'#FF9AA2',
+	'#F6A8A6',
+];
+
 function Cell(args) {
 	this.flag = 0;
 }
@@ -886,7 +908,43 @@ Cell.prototype = {
 	refreshFlag : function() {
 		ids.minesleft.innerHTML = ''+grid.minesUnmarked;
 		this.dom.innerHTML = (['', 'F', '?'])[this.flag];
+		
+		// if there is an overlay active and it includes this cell then update its color
+		if (grid.overlayTargetCell &&
+			// overlay cell is revealed?  showing its nbhd
+			(!grid.overlayTargetCell.hidden && grid.overlayTargetCell.nbhdCells.indexOf(this) != -1)
+			// overlay cell is hidden? showing its inv-nbhd
+			// and honestly it only shows those amogn these that are reaveled so ...
+			// ... there's no way this can be dynamically updated from our cell,
+			// so don't even bother
+			// || (grid.overlayTargetCell.hidden && grid.overlayTargetCell.invNbhdCells.indexOf(this) != -1)
+		) {
+			//this clears the overlays first
+			grid.overlayTargetCell.makeNbhdOverlays();
+		}
+
+		// for all cells that touch this (inv nbhd)
+		// if they are revealed and if their nbhd # mines matches their flag #
+		// then change their font to BOLD or something
+		// so there is a global indicator of mine nbhd validity
+		// also do this upon click reveal
+		this.invNbhdCells.forEach(cell => {
+			cell.updateBoldness();
+		});
+
 		grid.refreshUncoveredPercent();
+	},
+	updateBoldness : function() {
+		if (this.hidden) return;
+		let flagged = 0;
+		this.nbhdCells.forEach(cell => {
+			if (cell.flag) flagged++;
+		});
+		if (this.numTouch == flagged) {
+			this.dom.style.fontWeight = 'bold';
+		} else {
+			this.dom.style.fontWeight = 'normal';
+		}
 	},
 	show : function(dontChangeUncovered) {
 		if (!this.hidden) return;
@@ -896,17 +954,7 @@ Cell.prototype = {
 			text = '*';
 		} else if (this.numTouch > 0) {
 			text = this.numTouch + text;
-			const colors = [
-				'#7fff7f',
-				'#ffff7f',
-				'#ff7f7f',
-				'#cf3f3f',
-				'#7f7fcf',
-				'#cf7fcf',
-				'#7f3fcf',
-				'#3f3f7f',
-			];
-			this.dom.style.backgroundColor = colors[(this.numTouch-1)%colors.length];
+			this.dom.style.backgroundColor = neighborNumberColors[(this.numTouch-1)%neighborNumberColors.length];
 		} else {
 			// revealed empty tile
 		}
@@ -916,6 +964,8 @@ Cell.prototype = {
 		this.addNbhdSymbolText();
 
 		this.hidden = false;
+		this.updateBoldness();
+
 		grid.numHidden--;
 		if (!dontChangeUncovered) {
 			grid.refreshUncoveredPercent();
