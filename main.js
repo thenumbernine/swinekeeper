@@ -514,8 +514,7 @@ window.grid = grid;
 							//  or just on revealed tiles?
 							!grid.clicked
 						) {
-							grid.overlayTargetCell = undefined;
-							grid.clearNbhdOverlays();
+							grid.setOverlayTargetCell(undefined);
 							cell.click();
 						} else {	//mobileMode==true && grid.clicked here:
 							// if ids.showInvNbhds is off and the cell is hidden ... then just do a click
@@ -523,25 +522,20 @@ window.grid = grid;
 								cell.hidden
 							) {
 								if (!cell.flag) {	// if no flag then do a click
-									grid.overlayTargetCell = undefined;
-									grid.clearNbhdOverlays();
+									grid.setOverlayTargetCell(undefined);
 									cell.click();
 								} else {	// if flag then click won't activate anyways so ... show nbhd
 									if (grid.overlayTargetCell != cell) {
-										grid.overlayTargetCell = cell;
-										cell.makeNbhdOverlays();
+										grid.setOverlayTargetCell(cell);
 									} else {
-										grid.overlayTargetCell = undefined;
-										grid.clearNbhdOverlays();
+										grid.setOverlayTargetCell(undefined);
 									}
 								}
 							} else {	// showInvNbhds is on or the cell is revealed
 								if (grid.overlayTargetCell != cell) {
-									grid.overlayTargetCell = cell;
-									cell.makeNbhdOverlays();
+									grid.setOverlayTargetCell(cell);
 								} else {
-									grid.overlayTargetCell = undefined;
-									grid.clearNbhdOverlays();
+									grid.setOverlayTargetCell(undefined);
 									cell.click();
 								}
 							}
@@ -773,6 +767,11 @@ Grid.prototype = {
 		this.gamedone = true;
 		this.stopTimer();
 	},
+	setOverlayTargetCell : function(cell) {
+		this.overlayTargetCell = cell;
+		grid.clearNbhdOverlays();
+		if (cell) cell.makeNbhdOverlays();
+	},
 };
 
 //iterators?
@@ -940,8 +939,12 @@ Cell.prototype = {
 		this.nbhdCells.forEach(cell => {
 			if (cell.flag) flagged++;
 		});
-		if (this.numTouch == flagged) {
+		this.dom.style.color = '#000000';
+		if (this.numTouch <= flagged) {
 			this.dom.style.fontWeight = 'bold';
+			if (this.numTouch < flagged) {
+				this.dom.style.color = '#ff0000';
+			}
 		} else {
 			this.dom.style.fontWeight = 'normal';
 		}
@@ -978,12 +981,10 @@ Cell.prototype = {
 		this.dom.appendChild(this.nbhdSymbolText);
 	},
 	makeNbhdOverlays : function() {
-		if (!ids.hints.checked) return;
-
 		grid.clearNbhdOverlays();
+		if (!ids.hints.checked) return;
 		
-		// properties for !cell.hidden
-		let color = '#ff0000';
+		let color = '#0000ff';
 		let ignoreHidden = false;
 		
 		let highlightCallback = cell2 => {
@@ -1015,9 +1016,9 @@ Cell.prototype = {
 				if (cell2.flag == 1) flags++;
 			});
 			if (flags == this.numTouch) color = '#00ff00';
+			else if (flags > this.numTouch) color = '#ff0000';
 			this.nbhdIter(highlightCallback);
 		} else {
-			color = '#000000';
 			ignoreHidden = true;
 			this.invNbhdCells.forEach(highlightCallback);
 		}
