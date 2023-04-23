@@ -76,6 +76,12 @@ ids.showcellnbhd.addEventListener('change', e => {
 		}
 	});
 });
+ids.hints.addEventListener('change', e => {
+	if (!grid || !grid.clicked) return;
+	grid.forEachCell(cell => {
+		if (!cell.hidden) cell.updateBoldness();
+	});
+});
 
 ids.flagUnknown.addEventListener('change', e => {
 	if (!grid) return;
@@ -938,6 +944,11 @@ class Cell {
 	}
 	updateBoldness() {
 		if (this.hidden) return;
+		if (!ids.hints.checked) {
+			this.dom.style.color = '#000000';
+			this.dom.style.fontWeight = 'normal';
+			return;
+		}
 		let flagged = 0;
 		this.nbhdCells.forEach(cell => {
 			if (cell.flag) flagged++;
