@@ -46,6 +46,9 @@ function changedConfig(e) {
 	if (!grid.clicked) newgame();
 }
 
+ids.width.addEventListener('change', changedConfig);
+ids.height.addEventListener('change', changedConfig);
+ids.percentMines.addEventListener('change', changedConfig);
 ids.qgmode.addEventListener('change', changedConfig);
 ids.torus.addEventListener('change', changedConfig);
 
@@ -84,35 +87,35 @@ ids.flagUnknown.addEventListener('change', e => {
 	});
 });
 
-function Neighborhood(n, symbol, desc, checked) {
-	this.n = n;
-	this.symbol = symbol || '';
-	// default neighborhoods (not the QG ones)
-	if (desc) {
-		this.desc = desc;
-		this.input = DOM(
-			'input',
-			{
-				type : 'checkbox',
-				checked : checked,
-			},
-			null,
-			{
-				change : changedConfig,
-			}
-		);
-		ids.nbhddiv.appendChild(Text('('+this.desc+') '+this.symbol));
-		ids.nbhddiv.appendChild(this.input);
-		ids.nbhddiv.appendChild(DOM('br'));
+class Neighborhood {
+	constructor(n, symbol, desc, checked) {
+		this.n = n;
+		this.symbol = symbol || '';
+		// default neighborhoods (not the QG ones)
+		if (desc) {
+			this.desc = desc;
+			this.input = DOM(
+				'input',
+				{
+					type : 'checkbox',
+					checked : checked,
+				},
+				null,
+				{
+					change : changedConfig,
+				}
+			);
+			ids.nbhddiv.appendChild(Text('('+this.desc+') '+this.symbol));
+			ids.nbhddiv.appendChild(this.input);
+			ids.nbhddiv.appendChild(DOM('br'));
+		}
 	}
-}
-Neighborhood.prototype = {
-	iter : function(f) {
+	iter(f) {
 		this.n.forEach(dxy => {
 			f.apply(null, dxy);
 		});
-	},
-	gridPtIter : function(ij,f) {
+	}
+	gridPtIter(ij,f) {
 		const [i,j] = ij;
 		this.iter((dx,dy) => {
 			let x = i+dx;
@@ -129,8 +132,8 @@ Neighborhood.prototype = {
 				f(grid.cells[x][y]);
 			}
 		});
-	},
-};
+	}
+}
 
 function makeDxys(r, f) {
 	const n = [];
@@ -461,169 +464,169 @@ function pickRandom(ar) {
 	return ar[parseInt(Math.random() * ar.length)];
 }
 
-function Grid(args) {
-	grid = this;	//assign here so ctor calls can access 'grid'
-window.grid = grid;
-	const thiz = this;
-	this.clicked = false;
-	this.nbhdOverlays = [];
-	this.deaths = 0;
+class Grid {
+	constructor(args) {
+		grid = this;	//assign here so ctor calls can access 'grid'
+		window.grid = grid;
+		const thiz = this;
+		this.clicked = false;
+		this.nbhdOverlays = [];
+		this.deaths = 0;
 
-	[this.width, this.height] = args.size;
+		[this.width, this.height] = args.size;
 
-	ids.board.innerHTML = '';
+		ids.board.innerHTML = '';
 
-	this.torus = ids.torus.checked;
+		this.torus = ids.torus.checked;
 
-	this.cells = [];
-	for (let i = 0; i < this.width; ++i) {
-		this.cells[i] = [];
-	}
-
-	const cellSize = parseInt(ids.cellsize.value);
-	ids.board.style.width = (this.width * cellSize) + 'px';
-	for (let j = this.height-1; j >= 0; --j) {
-		const tr = DOM('tr');
-		tr.style.width = (this.width * cellSize) + 'px';
-		ids.board.appendChild(tr);
+		this.cells = [];
 		for (let i = 0; i < this.width; ++i) {
-			const cell = new Cell();
-			cell.pos = [i,j];
-			const dom = DOM(
-				'td',
-				undefined,
-				{
-					width : cellSize + 'px',
-					height : cellSize + 'px',
-					border : '1px solid black',
-					padding : '0px',
-					margin : '0px',
-					textAlign : 'center',
-					overflow : 'hidden',
-					whitespace : 'nowrap',
-					cursor : 'default',
-				},
-				{
-					// TODO this is getting out of hand.  make two click functions or something, or just merge this behavior with .click()?
-					click : e => {
-						// if mobile is off 
-						// or if it's the first click
-						// then just do a click
-						if (!ids.mobileMode.checked ||
-							// do I want mobile-mode to allow first-click to show neighborhood on *all tiles*?
-							//  or just on revealed tiles?
-							!grid.clicked
-						) {
-							grid.setOverlayTargetCell(undefined);
-							cell.click();
-						} else {	//mobileMode==true && grid.clicked here:
-							// if ids.showInvNbhds is off and the cell is hidden ... then just do a click
-							if (!ids.showInvNbhds.checked &&
-								cell.hidden
+			this.cells[i] = [];
+		}
+
+		const cellSize = parseInt(ids.cellsize.value);
+		ids.board.style.width = (this.width * cellSize) + 'px';
+		for (let j = this.height-1; j >= 0; --j) {
+			const tr = DOM('tr');
+			tr.style.width = (this.width * cellSize) + 'px';
+			ids.board.appendChild(tr);
+			for (let i = 0; i < this.width; ++i) {
+				const cell = new Cell();
+				cell.pos = [i,j];
+				const dom = DOM(
+					'td',
+					undefined,
+					{
+						width : cellSize + 'px',
+						height : cellSize + 'px',
+						border : '1px solid black',
+						padding : '0px',
+						margin : '0px',
+						textAlign : 'center',
+						overflow : 'hidden',
+						whitespace : 'nowrap',
+						cursor : 'default',
+					},
+					{
+						// TODO this is getting out of hand.  make two click functions or something, or just merge this behavior with .click()?
+						click : e => {
+							// if mobile is off 
+							// or if it's the first click
+							// then just do a click
+							if (!ids.mobileMode.checked ||
+								// do I want mobile-mode to allow first-click to show neighborhood on *all tiles*?
+								//  or just on revealed tiles?
+								!grid.clicked
 							) {
-								if (!cell.flag) {	// if no flag then do a click
-									grid.setOverlayTargetCell(undefined);
-									cell.click();
-								} else {	// if flag then click won't activate anyways so ... show nbhd
+								grid.setOverlayTargetCell(undefined);
+								cell.click();
+							} else {	//mobileMode==true && grid.clicked here:
+								// if ids.showInvNbhds is off and the cell is hidden ... then just do a click
+								if (!ids.showInvNbhds.checked &&
+									cell.hidden
+								) {
+									if (!cell.flag) {	// if no flag then do a click
+										grid.setOverlayTargetCell(undefined);
+										cell.click();
+									} else {	// if flag then click won't activate anyways so ... show nbhd
+										if (grid.overlayTargetCell != cell) {
+											grid.setOverlayTargetCell(cell);
+										} else {
+											grid.setOverlayTargetCell(undefined);
+										}
+									}
+								} else {	// showInvNbhds is on or the cell is revealed
 									if (grid.overlayTargetCell != cell) {
 										grid.setOverlayTargetCell(cell);
 									} else {
 										grid.setOverlayTargetCell(undefined);
+										cell.click();
 									}
 								}
-							} else {	// showInvNbhds is on or the cell is revealed
-								if (grid.overlayTargetCell != cell) {
-									grid.setOverlayTargetCell(cell);
-								} else {
-									grid.setOverlayTargetCell(undefined);
-									cell.click();
-								}
 							}
-						}
-					},
-					contextmenu : e => {
-						cell.setFlag();
-						e.preventDefault();
-					},
-					mouseenter : e => {
-						if (ids.mobileMode.checked) return;
-						cell.makeNbhdOverlays();
-					},
-					mouseleave : e => {
-						if (ids.mobileMode.checked) return;
-						grid.clearNbhdOverlays();
-					},
-				}
-			);
-			cell.dom = dom;
-			cell.hide();	//set hidden & background color
-			tr.appendChild(dom);
-			thiz.cells[i][j] = cell;
+						},
+						contextmenu : e => {
+							cell.setFlag();
+							e.preventDefault();
+						},
+						mouseenter : e => {
+							if (ids.mobileMode.checked) return;
+							cell.makeNbhdOverlays();
+						},
+						mouseleave : e => {
+							if (ids.mobileMode.checked) return;
+							grid.clearNbhdOverlays();
+						},
+					}
+				);
+				cell.dom = dom;
+				cell.hide();	//set hidden & background color
+				tr.appendChild(dom);
+				thiz.cells[i][j] = cell;
+			}
 		}
+
+		this.allCells = [];
+		this.forEachCell(cell => {
+			thiz.allCells.push(cell);
+		});
+		
+		// set neighborhoods here after cell has been assigned
+		// so we have cell.pos for the qg nbhd generator
+		
+		const nbhdFFA = ids.qgmode.checked;
+		let allowedNbhds = [];
+		nbhds.forEach(n => {
+			if (n.input.checked) allowedNbhds.push(n);
+		});
+		if (!nbhdFFA && !allowedNbhds.length) throw "can't play without any allowed nbhds";
+
+		this.forEachCell(cell => {
+			let nbhd = !nbhdFFA
+				? pickRandom(allowedNbhds)
+				: createRandomNeighborhood(cell.pos);
+			cell.nbhd = nbhd;
+			if (!cell.nbhd) throw "couldn't find nbhd "+nbhd;
+		});
+
+		// build nbhdCells based on nbhd
+		
+		this.forEachCell(cell => {
+			cell.nbhdCells = [];
+			cell.nbhd.gridPtIter(cell.pos, cell2 => {
+				cell.nbhdCells.push(cell2);
+			});
+		});
+
+		// store a list of all cells whose neighborhood touches this cell
+		// this is the list that needs to be repopulated if this cells' mine status changes.
+		this.forEachCell(cell => { cell.invNbhdCells = []; });
+		this.forEachCell(cell => {
+			cell.nbhdCells.forEach(cell2 => {
+				cell2.invNbhdCells.push(cell);
+			});
+		});
+
+		//just for display
+		// upon first click these get populated
+		this.numHidden = this.width * this.height;
+		this.numMines = 0;
+		this.minesUnmarked = 0;
+		this.refreshUncoveredPercent();
 	}
-
-	this.allCells = [];
-	this.forEachCell(cell => {
-		thiz.allCells.push(cell);
-	});
-	
-	// set neighborhoods here after cell has been assigned
-	// so we have cell.pos for the qg nbhd generator
-	
-	const nbhdFFA = ids.qgmode.checked;
-	let allowedNbhds = [];
-	nbhds.forEach(n => {
-		if (n.input.checked) allowedNbhds.push(n);
-	});
-	if (!nbhdFFA && !allowedNbhds.length) throw "can't play without any allowed nbhds";
-
-	this.forEachCell(cell => {
-		let nbhd = !nbhdFFA
-			? pickRandom(allowedNbhds)
-			: createRandomNeighborhood(cell.pos);
-		cell.nbhd = nbhd;
-		if (!cell.nbhd) throw "couldn't find nbhd "+nbhd;
-	});
-
-	// build nbhdCells based on nbhd
-	
-	this.forEachCell(cell => {
-		cell.nbhdCells = [];
-		cell.nbhd.gridPtIter(cell.pos, cell2 => {
-			cell.nbhdCells.push(cell2);
-		});
-	});
-
-	// store a list of all cells whose neighborhood touches this cell
-	// this is the list that needs to be repopulated if this cells' mine status changes.
-	this.forEachCell(cell => { cell.invNbhdCells = []; });
-	this.forEachCell(cell => {
-		cell.nbhdCells.forEach(cell2 => {
-			cell2.invNbhdCells.push(cell);
-		});
-	});
-
-	//just for display
-	// upon first click these get populated
-	this.numHidden = this.width * this.height;
-	this.numMines = 0;
-	this.minesUnmarked = 0;
-	this.refreshUncoveredPercent();
-}
-Grid.prototype = {
-	popRandomNonMineCell : function() {
+	popRandomNonMineCell() {
 		const n = this.notMineCells.length;
 		if (!n) throw "tried to pop a non-mine square when there was none left";
 		return this.notMineCells.splice(parseInt(Math.random() * n), 1)[0];
-	},
-	forEachCell : function(f) {
+	}
+	forEachCell(f) {
 		this.cells.forEach((col, i) => {
 			col.forEach((cell, j) => {
 				f(cell, i, j);
 			});
 		});
-	},
-	setupMines : function(firstClickCell) {
+	}
+	setupMines(firstClickCell) {
 		const thiz = this;
 		// now set random mines
 		this.notMineCells = this.allCells.slice();
@@ -685,9 +688,9 @@ Grid.prototype = {
 
 		// now count neighboring mines
 		this.forEachCell(cell => cell.calculateNumTouch());
-	},
+	}
 	// if a mine goes off we call this on all cells
-	revealAllMinesUponFailure : function() {
+	revealAllMinesUponFailure() {
 		/* not iterators */
 		this.forEachCell(cell => {
 			if (!cell.hidden) return;
@@ -700,19 +703,19 @@ Grid.prototype = {
 			if (cell.mine) cell.show();
 		}
 		*/
-	},
-	clearNbhdOverlays : function() {
+	}
+	clearNbhdOverlays() {
 		this.nbhdOverlays.forEach(o => { removeFromParent(o); });
 		this.nbhdOverlays = [];
-	},
-	refreshUncoveredPercent : function() {
+	}
+	refreshUncoveredPercent() {
 		const numRevealed = this.width * this.height
 			- this.numHidden
 			+ (this.numMines - this.minesUnmarked);
 		const percentUncovered = numRevealed / (this.width * this.height);
 		ids.percentUncovered.innerHTML = Math.floor(100*percentUncovered)+'%';
-	},
-	timerIntervalCallback : function() {
+	}
+	timerIntervalCallback() {
 		let dt = Math.floor((Date.now() - this.startTime) / 1000);
 		let s = dt % 60;
 		dt -= s;
@@ -727,13 +730,13 @@ Grid.prototype = {
 		let t = h+':'+m+':'+s;
 		if (this.deaths) t += ' ('+this.deaths+' undos)'
 		ids.timeTaken.innerHTML = t;
-	},
-	setTimerInterval : function() {
+	}
+	setTimerInterval() {
 		const thiz = this;
 		this.timerInterval = setInterval(() => { thiz.timerIntervalCallback(); }, 500);
 		this.timerIntervalCallback();
-	},
-	checkFirstClick : function(cell) {
+	}
+	checkFirstClick(cell) {
 		if (this.clicked) return;
 		this.clicked = true;
 
@@ -758,21 +761,21 @@ Grid.prototype = {
 			// add the old cell to the not-mine list
 			this.notMineCells.push(cell);
 		}
-	},
-	stopTimer : function() {
+	}
+	stopTimer() {
 		if (this.timerInterval) clearInterval(this.timerInterval);
 		this.timerInterval = undefined;
-	},
-	stopGame : function() {
+	}
+	stopGame() {
 		this.gamedone = true;
 		this.stopTimer();
-	},
-	setOverlayTargetCell : function(cell) {
+	}
+	setOverlayTargetCell(cell) {
 		this.overlayTargetCell = cell;
 		grid.clearNbhdOverlays();
 		if (cell) cell.makeNbhdOverlays();
-	},
-};
+	}
+}
 
 //iterators?
 function* cellIter() {
@@ -801,25 +804,25 @@ const neighborNumberColors = [
 	'#F6A8A6',
 ];
 
-function Cell(args) {
-	this.flag = 0;
-}
-Cell.prototype = {
-	nbhdIter : function(f) {
+class Cell {
+	constructor(args) {
+		this.flag = 0;
+	}
+	nbhdIter(f) {
 		this.nbhdCells.forEach(f);
-	},
-	calculateNumTouch : function() {
+	}
+	calculateNumTouch() {
 		let thiz = this;
 		this.numTouch = 0;
 		this.nbhdCells.forEach(cell => {
 			if (cell.mine) thiz.numTouch++;
 		});
-	},
-	hide : function() {
+	}
+	hide() {
 		this.hidden = true;
 		this.dom.style.backgroundColor = '#9f9f9f';
-	},
-	click : function() {
+	}
+	click() {
 		if (grid.gamedone) return;
 		if (this.flag) return;
 
@@ -891,8 +894,8 @@ Cell.prototype = {
 				ids.timeTaken.appendChild(Text(' YOU WIN'));
 			}
 		}
-	},
-	setFlag : function() {
+	}
+	setFlag() {
 		if (grid.gamedone) return;
 		if (!this.hidden) return;
 		// 0 = not marked
@@ -903,8 +906,8 @@ Cell.prototype = {
 		this.flag %= (ids.flagUnknown.checked ? 3 : 2);
 		if (this.flag == 1) grid.minesUnmarked--;
 		this.refreshFlag();
-	},
-	refreshFlag : function() {
+	}
+	refreshFlag() {
 		ids.minesleft.innerHTML = ''+grid.minesUnmarked;
 		this.dom.innerHTML = (['', 'F', '?'])[this.flag];
 		
@@ -932,8 +935,8 @@ Cell.prototype = {
 		});
 
 		grid.refreshUncoveredPercent();
-	},
-	updateBoldness : function() {
+	}
+	updateBoldness() {
 		if (this.hidden) return;
 		let flagged = 0;
 		this.nbhdCells.forEach(cell => {
@@ -948,8 +951,8 @@ Cell.prototype = {
 		} else {
 			this.dom.style.fontWeight = 'normal';
 		}
-	},
-	show : function(dontChangeUncovered) {
+	}
+	show(dontChangeUncovered) {
 		if (!this.hidden) return;
 		let text = '';
 		this.dom.style.backgroundColor = '#dfdfdf';
@@ -973,14 +976,14 @@ Cell.prototype = {
 		if (!dontChangeUncovered) {
 			grid.refreshUncoveredPercent();
 		}
-	},
-	addNbhdSymbolText : function() {
+	}
+	addNbhdSymbolText() {
 		if (!ids.showcellnbhd.checked) return;
 		if (this.mine) return;
 		this.nbhdSymbolText = Text(''+this.nbhd.symbol);
 		this.dom.appendChild(this.nbhdSymbolText);
-	},
-	makeNbhdOverlays : function() {
+	}
+	makeNbhdOverlays() {
 		grid.clearNbhdOverlays();
 		if (!ids.hints.checked) return;
 		
@@ -1022,8 +1025,8 @@ Cell.prototype = {
 			ignoreHidden = true;
 			this.invNbhdCells.forEach(highlightCallback);
 		}
-	},
-};
+	}
+}
 
 function newgame() {
 	if (grid) {
