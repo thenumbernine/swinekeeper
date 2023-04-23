@@ -78,6 +78,7 @@ ids.showcellnbhd.addEventListener('change', e => {
 });
 ids.hints.addEventListener('change', e => {
 	if (!grid || !grid.clicked) return;
+	grid.setOverlayTargetCell(undefined);
 	grid.forEachCell(cell => {
 		if (!cell.hidden) cell.updateBoldness();
 	});
