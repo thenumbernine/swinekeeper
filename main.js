@@ -99,22 +99,22 @@ function updateDarkMode() {
 	if (ids.darkMode.checked) {
 		document.documentElement.setAttribute('data-theme', 'dark');
 	} else {
-		document.documentElement.setAttribute('data-theme', 'dark');
+		document.documentElement.removeAttribute('data-theme', 'dark');
 	}
-	localStorage.setItem('theme', ids.darkMode.checked ? 'dark' : 'light');
+	let theme = ids.darkMode.checked ? 'dark' : 'light';
+	localStorage.setItem('theme', theme);
 }
 ids.darkMode.addEventListener('change', updateDarkMode);
 {
 	let darkMode = false;
 	let savedTheme = localStorage.getItem('theme');
 	if (savedTheme) {
-		if (localStorage == 'dark') {
+		if (savedTheme == 'dark') {
 			darkMode = true;
 		}
 	} else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
 		darkMode = true;
 	}
-
 	ids.darkMode.checked = darkMode;
 	updateDarkMode();
 }
@@ -538,6 +538,7 @@ class Grid {
 						overflow : 'hidden',
 						whitespace : 'nowrap',
 						cursor : 'default',
+						color : '#000000',
 					},
 					{
 						// TODO this is getting out of hand.  make two click functions or something, or just merge this behavior with .click()?
