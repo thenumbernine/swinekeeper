@@ -989,7 +989,7 @@ class Cell {
 		let hidden = 0;
 		this.nbhdCells.forEach(cell => {
 			if (!cell.hidden) return;
-			if (cell.flag) flagged++;
+			if (cell.flag == 1) flagged++;
 			hidden++;
 		});
 
