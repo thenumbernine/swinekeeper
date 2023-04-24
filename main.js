@@ -76,9 +76,12 @@ ids.showcellnbhd.addEventListener('change', e => {
 		}
 	});
 });
-ids.hints.addEventListener('change', e => {
+ids.showDetectionNbhd.addEventListener('change', e => {
 	if (!grid || !grid.clicked) return;
 	grid.setOverlayTargetCell(undefined);
+});
+ids.showTileHints.addEventListener('change', e => {
+	if (!grid || !grid.clicked) return;
 	grid.forEachCell(cell => {
 		if (!cell.hidden) cell.updateRevealedTileHint();
 	});
@@ -808,6 +811,54 @@ class Grid {
 		grid.clearNbhdOverlays();
 		if (cell) cell.makeNbhdOverlays();
 	}
+	clickedMine(cell) {
+		grid.stopGame();
+		ids.timeTaken.appendChild(Text(' YOU LOSE! '));
+		let giveup = undefined;
+		let undo = undefined;
+		const removeUndoOrGiveUp = () => {
+			removeFromParent(undo);
+			removeFromParent(giveup);
+			undo = undefined;
+			giveup = undefined;
+		};
+		undo = DOM(
+			'input',
+			{
+				type : 'button',
+				value : 'undo?',
+			},
+			null,
+			{
+				click : e => {
+					removeUndoOrGiveUp();
+					cell.hide();
+					grid.deaths++;
+					grid.gamedone = false;
+					grid.timerIntervalCallback();	//reset timeTaken div html
+					grid.setTimerInterval();
+				},
+			}
+		);
+		giveup = DOM(
+			'input',
+			{
+				type : 'button',
+				value : 'show mines',
+			},
+			null,
+			{
+				click : e => {
+					removeUndoOrGiveUp();
+					grid.revealAllMinesUponFailure();
+				},
+			}
+		);
+		ids.timeTaken.appendChild(undo);
+		ids.timeTaken.appendChild(giveup);
+		// and add a red overlay or something
+		cell.dom.style.backgroundColor = '#ff0000';
+	}
 }
 
 //iterators?
@@ -863,54 +914,12 @@ class Cell {
 
 		if (!this.hidden) return;
 		if (this.mine) {
-			grid.stopGame();
-			ids.timeTaken.appendChild(Text(' YOU LOSE! '));
-			let giveup = undefined;
-			let undo = undefined;
-			const removeUndoOrGiveUp = () => {
-				removeFromParent(undo);
-				removeFromParent(giveup);
-				undo = undefined;
-				giveup = undefined;
-			};
-			undo = DOM(
-				'input',
-				{
-					type : 'button',
-					value : 'undo?',
-				},
-				null,
-				{
-					click : e => {
-						removeUndoOrGiveUp();
-						this.hide();
-						grid.deaths++;
-						grid.gamedone = false;
-						grid.timerIntervalCallback();	//reset timeTaken div html
-						grid.setTimerInterval();
-					},
-				}
-			);
-			giveup = DOM(
-				'input',
-				{
-					type : 'button',
-					value : 'show mines',
-				},
-				null,
-				{
-					click : e => {
-						removeUndoOrGiveUp();
-						grid.revealAllMinesUponFailure();
-					},
-				}
-			);
-			ids.timeTaken.appendChild(undo);
-			ids.timeTaken.appendChild(giveup);
-			// and add a red overlay or something
-			this.dom.style.backgroundColor = '#ff0000';
+			grid.clickedMine(this);
 		} else {
 			this.show();
+			this.invNbhdCells.forEach(cell => {
+				cell.updateRevealedTileHint();
+			});
 			if (this.numTouch == 0) {
 				this.nbhdCells.forEach(cell => {
 					if (!cell.mine) {
@@ -971,7 +980,7 @@ class Cell {
 	}
 	updateRevealedTileHint() {
 		if (this.hidden) return;
-		if (!ids.hints.checked) {
+		if (!ids.showTileHints.checked) {
 			this.dom.style.color = '#000000';
 			this.dom.style.fontWeight = 'normal';
 			return;
@@ -989,11 +998,15 @@ class Cell {
 			this.dom.style.color = '#ff0000';
 		} else if (flagged == this.numTouch) {	// equal flags, just right.  display bold
 			this.dom.style.fontWeight = 'bold';
-			this.dom.style.color = '#000000';
+			if (hidden > flagged) {
+				this.dom.style.color = '#00ff00';
+			} else {
+				this.dom.style.color = '#000000';
+			}
 		// flagged < this.numTouch
 		} else if (hidden == this.numTouch) {	// matching number to num neighboring that are still hidden ... indicate somehow ... outline would be nice but text-shadow + dynamic javsacript = weird behavior
 			this.dom.style.fontWeight = 'bold'
-			this.dom.style.color = '#00ff00';
+			this.dom.style.color = '#0000ff';
 		} else {	// ... display normal
 			this.dom.style.fontWeight = 'normal';
 			this.dom.style.color = '#000000';
@@ -1032,7 +1045,7 @@ class Cell {
 	}
 	makeNbhdOverlays() {
 		grid.clearNbhdOverlays();
-		if (!ids.hints.checked) return;
+		if (!ids.showDetectionNbhd.checked) return;
 
 		let color = '#0000ff';
 		let ignoreHidden = false;

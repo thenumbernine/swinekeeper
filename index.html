@@ -58,11 +58,15 @@
 		<hr>
 		<br>
 
-		If you check the 'hints' checkbox then you'll get some help:<br>
+		If you check the 'show detection neighborhood' checkbox then you'll get some help:<br>
 		<br>
 
 		When you mouse-over a revealed tile, it will show you blue highlights over all the other tiles in its neighborhood which it detected, indicating that the unchecked neighbors are still potentially unsafe.<br>
+		<br>
+
 		If this matches the number of flags around it then the highlight will be green, indicating all other unflagged un-revealed tiles are safe to check (presuming your flagged mines are in the right place).<br>
+		<br>
+
 		If you have flagged too many tiles in a neighborhood then the highlight will be red, indicating you have a serious flaw in your deduction of where the mines belong.<br>
 		<br>
 
@@ -72,9 +76,27 @@
 
 		<hr>
 		<br>
+	
+		If you checked the 'tiles change color to give hints' then the numbers on revealed tiles will change appearance to offer you hints:<br>
+		<br>
+
+		A revealed tile will show its number blue if it has as many hidden neighbors as it has mines in its neighborhood, but they have not yet been flagged, hinting to you that the neighbors need to be flagged.<br>
+		<br>
+
+		It will be green if its number matches the number of flags in its neighborhood, and there are still more hidden tiles in its neighborhood, indicating those extra tiles need to be clicked.<br>
+		<br>
+
+		It will show bold black if all its neighborhood hidden tiles are flagged, hinting that this tile's usefulness is complete.<br>
+		<br>
+
+		It will show red if its number is less than the number of flags in its neighborhood, indicating that your flagging is incorrect.<br>
+		<br>
+
+		<hr>
+		<br>
 		
 		If you check the 'QUANTUM GRAVITY MODE' checkbox then every single tile will have a completely random neighborhood.<br>
-		You are going to want to play with hints enabled.
+		You are going to want to play with 'show detection neighborhood' enabled.
 
 		<hr>
 		<br>
@@ -88,7 +110,8 @@
 	<input id='percentMines' type='text' value='15'/> percent mines<br>
 	<input id='cellsize' type='text' value='24'/> tile size<br>
 	<input id='darkMode' type='checkbox'/>dark mode<br>
-	<input id='hints' type='checkbox' checked='checked'/> mouse hover to show detection neighborhood.<br>
+	<input id='showDetectionNbhd' type='checkbox' checked='checked'/> mouse hover to show detection neighborhood.<br>
+	<input id='showTileHints' type='checkbox' checked='checked'/> tiles change color to give hints.<br>
 	<input id='mobileMode' type='checkbox'/> mobile mode (click a revealed tile to shows its neighborhood).<br>
 	<input id='showInvNbhds' type='checkbox'/> ... first click a hidden tile to show which neighbors touch it.<br>
 	<input id='flagUnknown' type='checkbox'/> allow placing ? flags on tiles.<br>
