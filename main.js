@@ -80,7 +80,7 @@ ids.hints.addEventListener('change', e => {
 	if (!grid || !grid.clicked) return;
 	grid.setOverlayTargetCell(undefined);
 	grid.forEachCell(cell => {
-		if (!cell.hidden) cell.updateBoldness();
+		if (!cell.hidden) cell.updateRevealedTileHint();
 	});
 });
 
@@ -452,7 +452,7 @@ window.nbhds = nbhds;
 function createRandomNeighborhood(pos) {
 	const n = [];
 	//size?
-	//hmm, nbhd size ... 
+	//hmm, nbhd size ...
 	// 1, 2 = too small
 	// 4 = small but good
 	// 8 = ideal
@@ -543,7 +543,7 @@ class Grid {
 					{
 						// TODO this is getting out of hand.  make two click functions or something, or just merge this behavior with .click()?
 						click : e => {
-							// if mobile is off 
+							// if mobile is off
 							// or if it's the first click
 							// then just do a click
 							if (!ids.mobileMode.checked ||
@@ -603,10 +603,10 @@ class Grid {
 		this.forEachCell(cell => {
 			thiz.allCells.push(cell);
 		});
-		
+
 		// set neighborhoods here after cell has been assigned
 		// so we have cell.pos for the qg nbhd generator
-		
+
 		const nbhdFFA = ids.qgmode.checked;
 		let allowedNbhds = [];
 		nbhds.forEach(n => {
@@ -623,7 +623,7 @@ class Grid {
 		});
 
 		// build nbhdCells based on nbhd
-		
+
 		this.forEachCell(cell => {
 			cell.nbhdCells = [];
 			cell.nbhd.gridPtIter(cell.pos, cell2 => {
@@ -663,7 +663,7 @@ class Grid {
 		const thiz = this;
 		// now set random mines
 		this.notMineCells = this.allCells.slice();
-	
+
 		// create a nbhd of cells around our first-click cell
 		const safeCells = [];
 		/* pick a 3x3 neighborhood aroudn the first cell * /
@@ -677,14 +677,14 @@ class Grid {
 			safeCells.push(cell);
 		});
 		/**/
-		
+
 		// remove that neighborhood from the choices
 		safeCells.forEach(cell => {
 			const i = thiz.notMineCells.indexOf(cell);
 			if (i == -1) throw 'here';
 			thiz.notMineCells.splice(i, 1);
 		});
-		
+
 		// distribute mines
 		this.numMines = 0;
 		const targetNumMines = Math.ceil(this.allCells.length * parseFloat(ids.percentMines.value) / 100);
@@ -696,10 +696,10 @@ class Grid {
 		}
 		// re-add the removed safe cells
 		safeCells.forEach(cell => { thiz.notMineCells.push(cell); });
-		
+
 		this.minesUnmarked = this.numMines;
 		ids.minesleft.innerHTML = ''+grid.minesUnmarked;
-		
+
 		this.numHidden = this.width * this.height;
 		// refresh after setting numHidden and minesUnmarked
 		this.refreshUncoveredPercent();
@@ -906,7 +906,7 @@ class Cell {
 				}
 			);
 			ids.timeTaken.appendChild(undo);
-			ids.timeTaken.appendChild(giveup);		
+			ids.timeTaken.appendChild(giveup);
 			// and add a red overlay or something
 			this.dom.style.backgroundColor = '#ff0000';
 		} else {
@@ -943,7 +943,7 @@ class Cell {
 	refreshFlag() {
 		ids.minesleft.innerHTML = ''+grid.minesUnmarked;
 		this.dom.innerHTML = (['', 'F', '?'])[this.flag];
-		
+
 		// if there is an overlay active and it includes this cell then update its color
 		if (grid.overlayTargetCell &&
 			// overlay cell is revealed?  showing its nbhd
@@ -964,12 +964,12 @@ class Cell {
 		// so there is a global indicator of mine nbhd validity
 		// also do this upon click reveal
 		this.invNbhdCells.forEach(cell => {
-			cell.updateBoldness();
+			cell.updateRevealedTileHint();
 		});
 
 		grid.refreshUncoveredPercent();
 	}
-	updateBoldness() {
+	updateRevealedTileHint() {
 		if (this.hidden) return;
 		if (!ids.hints.checked) {
 			this.dom.style.color = '#000000';
@@ -977,17 +977,26 @@ class Cell {
 			return;
 		}
 		let flagged = 0;
+		let hidden = 0;
 		this.nbhdCells.forEach(cell => {
+			if (!cell.hidden) return;
 			if (cell.flag) flagged++;
+			hidden++;
 		});
-		this.dom.style.color = '#000000';
-		if (this.numTouch <= flagged) {
+
+		if (flagged > this.numTouch) {	// ... too many flags, something's wrong ... display bold-red
 			this.dom.style.fontWeight = 'bold';
-			if (this.numTouch < flagged) {
-				this.dom.style.color = '#ff0000';
-			}
-		} else {
+			this.dom.style.color = '#ff0000';
+		} else if (flagged == this.numTouch) {	// equal flags, just right.  display bold
+			this.dom.style.fontWeight = 'bold';
+			this.dom.style.color = '#000000';
+		// flagged < this.numTouch
+		} else if (hidden == this.numTouch) {	// matching number to num neighboring that are still hidden ... indicate somehow ... outline would be nice but text-shadow + dynamic javsacript = weird behavior
+			this.dom.style.fontWeight = 'bold'
+			this.dom.style.color = '#00ff00';
+		} else {	// ... display normal
 			this.dom.style.fontWeight = 'normal';
+			this.dom.style.color = '#000000';
 		}
 	}
 	show(dontChangeUncovered) {
@@ -1008,7 +1017,7 @@ class Cell {
 		this.addNbhdSymbolText();
 
 		this.hidden = false;
-		this.updateBoldness();
+		this.updateRevealedTileHint();
 
 		grid.numHidden--;
 		if (!dontChangeUncovered) {
@@ -1024,10 +1033,10 @@ class Cell {
 	makeNbhdOverlays() {
 		grid.clearNbhdOverlays();
 		if (!ids.hints.checked) return;
-		
+
 		let color = '#0000ff';
 		let ignoreHidden = false;
-		
+
 		let highlightCallback = cell2 => {
 			if (ignoreHidden && cell2.hidden) return;
 			const rect = cell2.dom.getBoundingClientRect();
@@ -1050,7 +1059,7 @@ class Cell {
 			body.appendChild(overlay);
 			grid.nbhdOverlays.push(overlay);
 		};
-		if (!this.hidden) { 
+		if (!this.hidden) {
 			// option ... green overlay when all mines are marked?
 			let flags = 0;
 			this.nbhdIter(cell2 => {
