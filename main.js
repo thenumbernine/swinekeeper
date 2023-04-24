@@ -94,6 +94,31 @@ ids.flagUnknown.addEventListener('change', e => {
 	});
 });
 
+//https://stackoverflow.com/questions/56300132/how-to-override-css-prefers-color-scheme-setting
+function updateDarkMode() {
+	if (ids.darkMode.checked) {
+		document.documentElement.setAttribute('data-theme', 'dark');
+	} else {
+		document.documentElement.setAttribute('data-theme', 'dark');
+	}
+	localStorage.setItem('theme', ids.darkMode.checked ? 'dark' : 'light');
+}
+ids.darkMode.addEventListener('change', updateDarkMode);
+{
+	let darkMode = false;
+	let savedTheme = localStorage.getItem('theme');
+	if (savedTheme) {
+		if (localStorage == 'dark') {
+			darkMode = true;
+		}
+	} else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+		darkMode = true;
+	}
+
+	ids.darkMode.checked = darkMode;
+	updateDarkMode();
+}
+
 class Neighborhood {
 	constructor(n, symbol, desc, checked) {
 		this.n = n;
@@ -655,7 +680,7 @@ class Grid {
 		// remove that neighborhood from the choices
 		safeCells.forEach(cell => {
 			const i = thiz.notMineCells.indexOf(cell);
-			if (i == -1) throw "here";
+			if (i == -1) throw 'here';
 			thiz.notMineCells.splice(i, 1);
 		});
 		

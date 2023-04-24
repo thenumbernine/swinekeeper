@@ -1,5 +1,16 @@
+:root {
+	--font-color: #000000;
+	--bg-color: rgb(243,243,243);
+}
+[data-theme="dark"] {
+	--font-color: #ffffff;
+	--bg-color: #000000;
+}
+
 body {
 	overflow : scroll;
+	background : var(--bg-color);
+	color : var(--font-color);
 }
 
 #neighborInfoDiv {
