@@ -13,6 +13,12 @@ body {
 	color : var(--font-color);
 }
 
+/* desktop chrome inputs have white background black font.  mobile chrome inputs have clear background black font. */
+input {
+	background : var(--bg-color);
+	color : var(--font-color);
+}
+
 #neighborInfoDiv {
 	float : right;
 	width : 40%;

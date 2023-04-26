@@ -1,7 +1,5 @@
 let grid;
 
-const body = document.body;
-
 function posmod(x,y) {
 	return ((x % y) + y) % y;
 }
@@ -121,6 +119,17 @@ ids.darkMode.addEventListener('change', updateDarkMode);
 	ids.darkMode.checked = darkMode;
 	updateDarkMode();
 }
+
+function propagate(f) {
+	let propagationDelay = parseInt(ids.propagationDelay.value);
+	if (!propagationDelay) {
+		f();
+	} else {
+		setTimeout(f, parseInt((Math.random() * .5 + .75) * propagationDelay));
+	}
+}
+
+
 
 class Neighborhood {
 	constructor(n, symbol, desc, checked) {
@@ -582,7 +591,7 @@ class Grid {
 							}
 						},
 						contextmenu : e => {
-							cell.setFlag();
+							cell.toggleFlag();
 							e.preventDefault();
 						},
 						mouseenter : e => {
@@ -907,6 +916,7 @@ class Cell {
 		this.dom.style.backgroundColor = '#9f9f9f';
 	}
 	click() {
+		let thiz = this;
 		if (grid.gamedone) return;
 		if (this.flag) return;
 
@@ -921,10 +931,19 @@ class Cell {
 				cell.updateRevealedTileHint();
 			});
 			if (this.numTouch == 0) {
-				this.nbhdCells.forEach(cell => {
-					if (!cell.mine) {
-						cell.click();
-					}
+				propagate(() => {
+					thiz.nbhdCells.forEach(cell => {
+						if (!cell.mine) {
+							cell.click();
+						}
+					});
+				});
+			}
+			if (ids.autoClick.checked) {
+				propagate(() => {
+					this.nbhdCells.forEach(cell => {
+						cell.checkAutoClick();
+					});
 				});
 			}
 
@@ -937,7 +956,7 @@ class Cell {
 			}
 		}
 	}
-	setFlag() {
+	toggleFlag() {
 		if (grid.gamedone) return;
 		if (!this.hidden) return;
 		// 0 = not marked
@@ -950,6 +969,7 @@ class Cell {
 		this.refreshFlag();
 	}
 	refreshFlag() {
+		var thiz = this;
 		ids.minesleft.innerHTML = ''+grid.minesUnmarked;
 		this.dom.innerHTML = (['', 'F', '?'])[this.flag];
 
@@ -977,6 +997,14 @@ class Cell {
 		});
 
 		grid.refreshUncoveredPercent();
+
+		if (ids.autoClick.checked) {
+			propagate(() => {
+				thiz.invNbhdCells.forEach(cell => {
+					cell.checkAutoClick();
+				});
+			});
+		}
 	}
 	updateRevealedTileHint() {
 		if (this.hidden) return;
@@ -1011,6 +1039,34 @@ class Cell {
 			this.dom.style.fontWeight = 'normal';
 			this.dom.style.color = '#000000';
 		}
+	}
+	checkAutoClick() {
+		if (this.hidden) return;
+
+		let flagged = 0;
+		let hidden = 0;
+		this.nbhdCells.forEach(cell => {
+			if (!cell.hidden) return;
+			if (cell.flag == 1) flagged++;
+			hidden++;
+		});
+
+		if (flagged > this.numTouch) {	// ... too many flags, something's wrong ... display bold-red
+		} else if (flagged == this.numTouch) {	// equal flags, just right.  display bold
+			if (hidden > flagged) {
+				// TODO click all unflagged neighbors
+				this.nbhdCells.forEach(cell => { cell.click(); });
+			} else {
+			}
+		// flagged < this.numTouch
+		} else if (hidden == this.numTouch) {	// matching number to num neighboring that are still hidden ... indicate somehow ... outline would be nice but text-shadow + dynamic javsacript = weird behavior
+			// TODO flag all neighbors
+			this.nbhdCells.forEach(cell => {
+				if (!cell.flag) cell.toggleFlag();
+			});
+		} else {	// ... normal
+		}
+
 	}
 	show(dontChangeUncovered) {
 		if (!this.hidden) return;
@@ -1069,7 +1125,7 @@ class Cell {
 					pointerEvents : 'none',
 				},
 			);
-			body.appendChild(overlay);
+			document.body.appendChild(overlay);
 			grid.nbhdOverlays.push(overlay);
 		};
 		if (!this.hidden) {
@@ -1104,7 +1160,7 @@ function newgame() {
 
 ids.newgame.addEventListener('click', newgame);
 
-body.addEventListener('keydown', e => {
+document.body.addEventListener('keydown', e => {
 	if (e.keyCode == 113) {	//F2
 		e.preventDefault();
 		newgame();

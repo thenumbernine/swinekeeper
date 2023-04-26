@@ -10,7 +10,7 @@
 
 	<a href="https://buy.stripe.com/00gbJZ0OdcNs9zi288"><img src="https://img.shields.io/badge/Donate-Stripe-green.svg" alt="Donate via Stripe"/></a><br>
 	<a href="bitcoin:37fsp7qQKU8XoHZGRQvVzQVP8FrEJ73cSJ"><img src="https://img.shields.io/badge/Donate-Bitcoin-green.svg" alt="Donate via Bitcoin"/></a><br>
-	
+
 	<div id='neighborInfoDiv'>
 	neighborhoods:<br>
 	<div id='nbhddiv'>
@@ -22,7 +22,7 @@
 		HELP:<br>
 		This is just like original minesweeper but with varying detection neighborhoods.<Br>
 		<br>
-		
+
 		Click to reveal if a tile has a mine or not.<br>
 		If it does then you lose.<br>
 		If it does not then it will show you a number telling you how many mines are in its neighborhood.<br>
@@ -37,24 +37,24 @@
 		In original minesweeper, this neighborhood consisted of just the 3x3 tiles surrounding it.<br>
 		in Swinekeeper, the detection neighborhoods vary per tile.<br>
 		<br>
-		
+
 		In mobile mode, there is no mouse-over, so I provided the "two clicks to reveal..." option.<br>
 		With this enabled, the first click on a tile will reveal its neighborhood, and the second click will reveal the tile.<br>
 		<br>
-		
+
 		<hr>
 
 		You can choose on the right column under 'neighborhoods' which possible neighborhoods to allow.<br>
 		If you uncheck all of them except the '3x3' option then you will get original minesweeper.<br>
 		<br>
-		
+
 		<hr>
 		<br>
 
 		Now when you open a tile, it will tell you first the number of mines next to it, and next the letter indicating what kind of neighborhood it is using to detect the mines.<br>
 		The 'neighborhoods' legend in the upper-right will show you what each of the letters mean.<br>
 		<br>
-		
+
 		<hr>
 		<br>
 
@@ -76,7 +76,7 @@
 
 		<hr>
 		<br>
-	
+
 		If you checked the 'tiles change color to give hints' then the numbers on revealed tiles will change appearance to offer you hints:<br>
 		<br>
 
@@ -94,7 +94,7 @@
 
 		<hr>
 		<br>
-		
+
 		If you check the 'QUANTUM GRAVITY MODE' checkbox then every single tile will have a completely random neighborhood.<br>
 		You are going to want to play with 'show detection neighborhood' enabled.
 
@@ -108,10 +108,12 @@
 	<input id='width' type='text' value='30'/> width<br>
 	<input id='height' type='text' value='20'/> height<br>
 	<input id='percentMines' type='text' value='15'/> percent mines<br>
-	<input id='cellsize' type='text' value='24'/> tile size<br>
+	<input id='cellsize' type='text' value='24'/> tile size (px)<br>
+	<input id='propagationDelay' type='text' value='50'/> propagation delay (ms)<br>
 	<input id='darkMode' type='checkbox'/>dark mode<br>
 	<input id='showDetectionNbhd' type='checkbox' checked='checked'/> mouse hover to show detection neighborhood.<br>
 	<input id='showTileHints' type='checkbox' checked='checked'/> tiles change color to give hints.<br>
+	<input id='autoClick' type='checkbox'/> automatically flag and click tiles.<br>
 	<input id='mobileMode' type='checkbox'/> mobile mode (click a revealed tile to shows its neighborhood).<br>
 	<input id='showInvNbhds' type='checkbox'/> ... first click a hidden tile to show which neighbors touch it.<br>
 	<input id='flagUnknown' type='checkbox'/> allow placing ? flags on tiles.<br>
@@ -127,6 +129,6 @@
 	<br>
 
 	<table id='board'></table>
-	
+
 	</body>
 </html>
