@@ -136,7 +136,45 @@ class Neighborhood {
 		this.n = n;
 		this.symbol = symbol || '';
 		// default neighborhoods (not the QG ones)
-		if (desc) {
+		if (desc !== undefined) {
+		
+/*
+calc its unique id based on its max radius and encoding rings of nbhds as bitflags
+*/
+			
+			let m = {};
+			n.forEach(d => {
+				let [x, y] = d;
+				if (!(x in m)) m[x] = {};
+				m[x][y] = true;
+			});
+			const hasM = (x,y) => {
+				if (!(x in m)) return false;
+				return m[x][y];
+			};
+			
+			let maxrad = 0;
+			n.forEach(d => { maxrad = Math.max(maxrad, Math.abs(d[0]), Math.abs(d[1])); });
+			let bitbase = 0;
+			let bits = [];
+			for (let r = 1; r <= maxrad; ++r) {
+				for (let i = 0; i < 2*r; ++i) {
+					if (hasM(r, -r+i)) bits[i + bitbase] = true;
+					if (hasM(r-i, r)) bits[i + 2*r + bitbase] = true;
+					if (hasM(-r, r-i)) bits[i + 4*r + bitbase] = true;
+					if (hasM(-r+i, -r)) bits[i + 6*r + bitbase] = true;
+				}
+				bitbase += r << 3;
+			}
+			let bitstr = '';
+			for (let i = 0; i < bits.length; i+=4) {
+				let v = 0;
+				for (let j = 0; j < 4; ++j) {
+					if (bits[i+j]) v |= 1 << j;
+				}
+				bitstr = v.toString(16) + bitstr;
+			}
+		
 			this.desc = desc;
 			this.input = DOM(
 				'input',
@@ -149,13 +187,9 @@ class Neighborhood {
 					change : changedConfig,
 				}
 			);
-			ids.nbhddiv.appendChild(Text('('+this.desc+') '+this.symbol));
+			ids.nbhddiv.appendChild(Text(this.desc+' '+'(code='+ bitstr + ', symbol='+this.symbol+')'));
 			ids.nbhddiv.appendChild(this.input);
 			ids.nbhddiv.appendChild(DOM('br'));
-		
-/*
-calc its unique id based on its max radius and encoding rings of nbhds as bitflags
-*/
 		}
 	}
 	static fromLambda(r, f, symbol, desc, checked) {
@@ -462,6 +496,10 @@ o.o.o
 
 ];
 window.nbhds = nbhds;
+
+ids.customNbhdAdd.addEventListener('click', e => {
+	nbhds.push(Neighborhood.fromStr(ids.customNbhdStr.value, ids.customNbhdSymbol.value, '', true));
+});
 
 function createRandomNeighborhood(pos) {
 	const n = [];
@@ -971,7 +1009,7 @@ class Cell {
 		this.refreshFlag();
 	}
 	refreshFlag() {
-		var thiz = this;
+		let thiz = this;
 		ids.minesleft.innerHTML = ''+grid.minesUnmarked;
 		this.dom.innerHTML = (['', 'F', '?'])[this.flag];
 

@@ -21,14 +21,14 @@ input {
 
 #neighborInfoDiv {
 	float : right;
-	width : 40%;
+	width : 50%;
 	text-align : right;
 }
 
 #nbhddiv {
 	overflow-x : hidden;
 	overflow-y : scroll;
-	height : 6em;
+	height : 20em;
 }
 
 #helpdiv {
