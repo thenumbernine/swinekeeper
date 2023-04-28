@@ -152,7 +152,39 @@ class Neighborhood {
 			ids.nbhddiv.appendChild(Text('('+this.desc+') '+this.symbol));
 			ids.nbhddiv.appendChild(this.input);
 			ids.nbhddiv.appendChild(DOM('br'));
+		
+/*
+calc its unique id based on its max radius and encoding rings of nbhds as bitflags
+*/
 		}
+	}
+	static fromLambda(r, f, symbol, desc, checked) {
+		const n = [];
+		for (let dx = -r; dx <= r; ++dx) {
+			for (let dy = -r; dy <= r; ++dy) {
+				if (!(dx == 0 && dy == 0) && f(dx,dy)) n.push([dx,dy]);
+			}
+		}
+		return new Neighborhood(n, symbol, desc, checked);
+	}
+	static fromStr(s, symbol, desc, checked) {
+		const l = s.split('\n');
+		if (l[0] == '') l.splice(0, 1);
+		if (l[l.length-1] == '') l.splice(l.length-1, 1);
+		if (l.length & 1 == 0) throw "can't create nbhd from string if it has an even number of lines";
+		const h = l.length;	//2n+1
+		const w = l[0].length;
+		const hh = (h - 1) >> 1;
+		const hw = (w - 1) >> 1;
+		const n = [];
+		for (let j = 0; j < h; ++j) {
+			for (let i = 0; i < w; ++i) {
+				if (l[j].substr(i,1) == 'o') {
+					n.push([i-hw,j-hh]);
+				}
+			}
+		}
+		return new Neighborhood(n, symbol, desc, checked);
 	}
 	iter(f) {
 		this.n.forEach(dxy => {
@@ -179,273 +211,243 @@ class Neighborhood {
 	}
 }
 
-function makeDxys(r, f) {
-	const n = [];
-	for (let dx = -r; dx <= r; ++dx) {
-		for (let dy = -r; dy <= r; ++dy) {
-			if (!(dx == 0 && dy == 0) && f(dx,dy)) n.push([dx,dy]);
-		}
-	}
-	return n;
-}
-
-function nbhdsFromStr(s) {
-	const l = s.split('\n');
-	if (l[0] == '') l.splice(0, 1);
-	if (l[l.length-1] == '') l.splice(l.length-1, 1);
-	if (l.length & 1 == 0) throw "can't create nbhd from string if it has an even number of lines";
-	const h = l.length;	//2n+1
-	const w = l[0].length;
-	const hh = (h - 1) >> 1;
-	const hw = (w - 1) >> 1;
-	const n = [];
-	for (let j = 0; j < h; ++j) {
-		for (let i = 0; i < w; ++i) {
-			if (l[j].substr(i,1) == 'o') {
-				n.push([i-hw,j-hh]);
-			}
-		}
-	}
-	return n;
-}
-
 const nbhds = [
 	//3x3
-	new Neighborhood(nbhdsFromStr(`
+	Neighborhood.fromStr(`
 ooo
 o.o
 ooo
-`), 'o', '3x3', true),
-	new Neighborhood(nbhdsFromStr(`
+`, 'o', '3x3', true),
+	Neighborhood.fromStr(`
 .o.
 o.o
 .o.
-`), '+', '3x3 cardinals', true),
-	new Neighborhood(nbhdsFromStr(`
+`, '+', '3x3 cardinals', true),
+	Neighborhood.fromStr(`
 o.o
 ...
 o.o
-`), 'x', '3x3 diagonals', true),
+`, 'x', '3x3 diagonals', true),
 
 	//3x5
-	new Neighborhood(nbhdsFromStr(`
+	Neighborhood.fromStr(`
 ooo
 ooo
 o.o
 ooo
 ooo
-`), 'a', '3x5', true),
-	new Neighborhood(nbhdsFromStr(`
+`, 'a', '3x5', true),
+	Neighborhood.fromStr(`
 ooooo
 oo.oo
 ooooo
-`), 'b', '5x3', true),
+`, 'b', '5x3', true),
 
 	//5x5
-	new Neighborhood(nbhdsFromStr(`
+	Neighborhood.fromStr(`
 ooooo
 ooooo
 oo.oo
 ooooo
 ooooo
-`), 'O', '5x5', true),
-	new Neighborhood(nbhdsFromStr(`
+`, 'O', '5x5', true),
+	Neighborhood.fromStr(`
 ..o..
 ..o..
 oo.oo
 ..o..
 ..o..
-`), 'P', '5x5 cardinals', true),
-	new Neighborhood(nbhdsFromStr(`
+`, 'P', '5x5 cardinals', true),
+	Neighborhood.fromStr(`
 o...o
 .o.o.
 .....
 .o.o.
 o...o
-`), 'X', '5x5 diagonals', true),
-	new Neighborhood(nbhdsFromStr(`
+`, 'X', '5x5 diagonals', true),
+	Neighborhood.fromStr(`
 ooooo
 o...o
 o...o
 o...o
 ooooo
-`), 'J', '5x5 symmetric', false),
-	new Neighborhood(nbhdsFromStr(`
+`, 'J', '5x5 symmetric', false),
+	Neighborhood.fromStr(`
 .ooo.
 o...o
 o...o
 o...o
 .ooo.
-`), 'F', '5x5 symmetric', false),
-	new Neighborhood(nbhdsFromStr(`
+`, 'F', '5x5 symmetric', false),
+	Neighborhood.fromStr(`
 oo.oo
 oo.oo
 .....
 oo.oo
 oo.oo
-`), 'K', '5x5 symmetric', false),
-	new Neighborhood(nbhdsFromStr(`
+`, 'K', '5x5 symmetric', false),
+	Neighborhood.fromStr(`
 .ooo.
 oo.oo
 o...o
 oo.oo
 .ooo.
-`), 'R', '5x5 symmetric', false),
-	new Neighborhood(nbhdsFromStr(`
+`, 'R', '5x5 symmetric', false),
+	Neighborhood.fromStr(`
 .ooo.
 ooooo
 oo.oo
 ooooo
 .ooo.
-`), 'AA', '5x5 symmetric', false),
+`, 'AA', '5x5 symmetric', false),
 
 // iterate over all upper-left corner upper-triangular permutations of on/off and symmetrize them
-	new Neighborhood(nbhdsFromStr(`
+	Neighborhood.fromStr(`
 o...o
 .....
 .....
 .....
 o...o
-`), 'A', '5x5 symmetric', false),
-	new Neighborhood(nbhdsFromStr(`
+`, 'A', '5x5 symmetric', false),
+	Neighborhood.fromStr(`
 .o.o.
 o...o
 .....
 o...o
 .o.o.
-`), 'B', '5x5 symmetric', false),
-	new Neighborhood(nbhdsFromStr(`
+`, 'B', '5x5 symmetric', false),
+	Neighborhood.fromStr(`
 ..o..
 .....
 o...o
 .....
 ..o..
-`), 'C', '5x5 symmetric', false),
-	new Neighborhood(nbhdsFromStr(`
+`, 'C', '5x5 symmetric', false),
+	Neighborhood.fromStr(`
 oo.oo
 o...o
 .....
 o...o
 oo.oo
-`), 'C', '5x5 symmetric', false),
-	new Neighborhood(nbhdsFromStr(`
+`, 'C', '5x5 symmetric', false),
+	Neighborhood.fromStr(`
 o.o.o
 .....
 o...o
 .....
 o.o.o
-`), 'D', '5x5 symmetric', false),
-	new Neighborhood(nbhdsFromStr(`
+`, 'D', '5x5 symmetric', false),
+	Neighborhood.fromStr(`
 o...o
 ..o..
 .o.o.
 ..o..
 o...o
-`), 'E', '5x5 symmetric', false),
-	new Neighborhood(nbhdsFromStr(`
+`, 'E', '5x5 symmetric', false),
+	Neighborhood.fromStr(`
 .o.o.
 oo.oo
 .....
 oo.oo
 .o.o.
-`), 'G', '5x5 symmetric', false),
-	new Neighborhood(nbhdsFromStr(`
+`, 'G', '5x5 symmetric', false),
+	Neighborhood.fromStr(`
 .o.o.
 o.o.o
 .o.o.
 o.o.o
 .o.o.
-`), 'H', '5x5 symmetric', false),
-	new Neighborhood(nbhdsFromStr(`
+`, 'H', '5x5 symmetric', false),
+	Neighborhood.fromStr(`
 ..o..
 .o.o.
 o...o
 .o.o.
 ..o..
-`), 'I', '5x5 symmetric', false),
-	new Neighborhood(nbhdsFromStr(`
+`, 'I', '5x5 symmetric', false),
+	Neighborhood.fromStr(`
 oo.oo
 o.o.o
 .o.o.
 o.o.o
 oo.oo
-`), 'L', '5x5 symmetric', false),
-	new Neighborhood(nbhdsFromStr(`
+`, 'L', '5x5 symmetric', false),
+	Neighborhood.fromStr(`
 o.o.o
 .o.o.
 o...o
 .o.o.
 o.o.o
-`), 'M', '5x5 symmetric', false),
-	new Neighborhood(nbhdsFromStr(`
+`, 'M', '5x5 symmetric', false),
+	Neighborhood.fromStr(`
 o.o.o
 ..o..
 oo.oo
 ..o..
 o.o.o
-`), 'N', '5x5 symmetric', false),
-	new Neighborhood(nbhdsFromStr(`
+`, 'N', '5x5 symmetric', false),
+	Neighborhood.fromStr(`
 o...o
 .ooo.
 .o.o.
 .ooo.
 o...o
-`), 'Q', '5x5 symmetric', false),
-	new Neighborhood(nbhdsFromStr(`
+`, 'Q', '5x5 symmetric', false),
+	Neighborhood.fromStr(`
 .ooo.
 o.o.o
 oo.oo
 o.o.o
 .ooo.
-`), 'S', '5x5 symmetric', false),
-	new Neighborhood(nbhdsFromStr(`
+`, 'S', '5x5 symmetric', false),
+	Neighborhood.fromStr(`
 .o.o.
 ooooo
 .o.o.
 ooooo
 .o.o.
-`), 'T', '5x5 symmetric', false),
-	new Neighborhood(nbhdsFromStr(`
+`, 'T', '5x5 symmetric', false),
+	Neighborhood.fromStr(`
 ..o..
 .ooo.
 oo.oo
 .ooo.
 ..o..
-`), 'U', '5x5 symmetric', false),
-	new Neighborhood(nbhdsFromStr(`
+`, 'U', '5x5 symmetric', false),
+	Neighborhood.fromStr(`
 ooooo
 oo.oo
 o...o
 oo.oo
 ooooo
-`), 'V', '5x5 symmetric', false),
-	new Neighborhood(nbhdsFromStr(`
+`, 'V', '5x5 symmetric', false),
+	Neighborhood.fromStr(`
 ooooo
 o.o.o
 oo.oo
 o.o.o
 ooooo
-`), 'W', '5x5 symmetric', false),
-	new Neighborhood(nbhdsFromStr(`
+`, 'W', '5x5 symmetric', false),
+	Neighborhood.fromStr(`
 oo.oo
 ooooo
 .o.o.
 ooooo
 oo.oo
-`), 'Y', '5x5 symmetric', false),
-	new Neighborhood(nbhdsFromStr(`
+`, 'Y', '5x5 symmetric', false),
+	Neighborhood.fromStr(`
 o.o.o
 .ooo.
 oo.oo
 .ooo.
 o.o.o
-`), 'Z', '5x5 symmetric', false),
+`, 'Z', '5x5 symmetric', false),
 
 
-	new Neighborhood(makeDxys(3, (x,y) => { return true; }), 'aa', '7x7 square', false),
-	new Neighborhood(makeDxys(3, (x,y) => { return Math.abs(x)>1 || Math.abs(y)>1; }), 'aa', '7x7 square 2-thick', false),
-	new Neighborhood(makeDxys(3, (x,y) => { return Math.abs(x)==3 || Math.abs(y)==3; }), 'aa', '7x7 hollow square', false),
-	new Neighborhood(makeDxys(3, (x,y) => { return Math.abs(x) + Math.abs(y) == 3; }), 'aa', '7x7 hollow diamond', false),
+	Neighborhood.fromLambda(3, (x,y) => { return true; }, 'aa', '7x7 square', false),
+	Neighborhood.fromLambda(3, (x,y) => { return Math.abs(x)>1 || Math.abs(y)>1; }, 'aa', '7x7 square 2-thick', false),
+	Neighborhood.fromLambda(3, (x,y) => { return Math.abs(x)==3 || Math.abs(y)==3; }, 'aa', '7x7 hollow square', false),
+	Neighborhood.fromLambda(3, (x,y) => { return Math.abs(x) + Math.abs(y) == 3; }, 'aa', '7x7 hollow diamond', false),
 
 //asymmetric?
 	new Neighborhood([[-1,1]], 'ul', 'up left', false),
@@ -679,7 +681,7 @@ class Grid {
 		// create a nbhd of cells around our first-click cell
 		const safeCells = [];
 		/* pick a 3x3 neighborhood aroudn the first cell * /
-		new Neighborhood(makeDxys(1, (x,y) => { return true; })).gridPtIter(firstClickCell.pos, cell => {
+		Neighborhood.fromLambda(1, (x,y) => { return true; }).gridPtIter(firstClickCell.pos, cell => {
 			safeCells.push(cell);
 		});
 		/**/
