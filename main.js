@@ -1147,18 +1147,39 @@ class Cell {
 		if (this.mine) {
 			text = '*';
 		} else if (this.numTouch > 0) {
-			text = ''+this.numTouch;
 			this.dom.style.backgroundColor = neighborNumberColors[(this.numTouch-1)%neighborNumberColors.length];
+		
+			if (ids.countdown.checked) {
+				let flagged = 0;
+				let anyHiddenLeft = 0;
+				this.nbhdCells.forEach(cell => {
+					if (cell.flag == 1) {
+						flagged++;
+					} else if (cell.hidden && cell.flag == 0) {
+						anyHiddenLeft = true;
+					}
+				});
+				const howMuchLeft = this.numTouch - flagged
+				if (howMuchLeft == 0 && !anyHiddenLeft) {
+					text = '';
+
+/* not working yet ..
+					this.dom.style.backgroundColor = null;
+					this.dom.style.backgroundImage = 'doge.jpg';
+					this.dom.style.backgroundPosition = (100 * this.pos[0] / grid.width)+'% '
+						+(100 * this.pos[1] / grid.height)+'%';
+					this.dom.style.backgroundSize = (100 / grid.width)+'% '
+						+(100 / grid.height)+'%';
+*/				
+				} else {
+					text = ''+howMuchLeft;
+				}
+			} else {
+				text = ''+this.numTouch;
+			}
+
 		} else {
 			// revealed empty tile
-		}
-
-		if (ids.countdown.checked) {
-			let flagged = 0;
-			this.nbhdCells.forEach(cell => {
-				if (cell.flag == 1) flagged++;
-			});
-			text = ''+(this.numTouch - flagged);
 		}
 
 		if (text != '') {
