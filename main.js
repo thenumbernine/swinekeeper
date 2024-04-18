@@ -1163,16 +1163,13 @@ class Cell {
 				if (howMuchLeft == 0 && !anyHiddenLeft) {
 					text = '';
 
-/* not working yet ..
-					this.dom.style.backgroundColor = null;
-					this.dom.style.backgroundImage = 'doge.jpg';
-					this.dom.style.backgroundPosition = (100 * this.pos[0] / grid.width)+'% '
-						+(100 * this.pos[1] / grid.height)+'%';
-					this.dom.style.backgroundSize = (100 / grid.width)+'% '
-						+(100 / grid.height)+'%';
-*/				
+					this.showBackground();
 				} else {
 					text = ''+howMuchLeft;
+				
+					this.dom.style.backgroundImage = null;
+					this.dom.style.backgroundPosition = null;
+					this.dom.style.backgroundSize = null;
 				}
 			} else {
 				text = ''+this.numTouch;
@@ -1180,6 +1177,7 @@ class Cell {
 
 		} else {
 			// revealed empty tile
+			this.showBackground();
 		}
 
 		if (text != '') {
@@ -1187,6 +1185,21 @@ class Cell {
 		}
 
 		this.addNbhdSymbolText();
+	}
+
+	showBackground() {
+		this.dom.style.backgroundColor = null;
+		this.dom.style.backgroundImage = 'url("doge.jpg")';
+		const imageWidth = 900;
+		const imageHeight = 900;
+		const x1 = parseInt(imageWidth * this.pos[0] / grid.width);
+		const y1 = parseInt(imageHeight * this.pos[1] / grid.height);
+		this.dom.style.backgroundPosition = (-x1)+'px '+y1+'px';
+		const x2 = parseInt(imageWidth * (this.pos[0] + 1) / grid.width);
+		const y2 = parseInt(imageHeight * (this.pos[1] + 1) / grid.height);
+		const sx = x2 - x1;
+		const sy = y2 - y1;
+		//this.dom.style.backgroundSize = sx+'px '+sy+'px';	// this isn't the cropped size ... it's the image size ... ?
 	}
 
 	addNbhdSymbolText() {
