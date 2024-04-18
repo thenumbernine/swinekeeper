@@ -86,6 +86,7 @@ ids.showDetectionNbhd.addEventListener('change', e => {
 	if (!grid || !grid.clicked) return;
 	grid.setOverlayTargetCell(undefined);
 });
+
 ids.showTileHints.addEventListener('change', e => {
 	if (!grid || !grid.clicked) return;
 	grid.forEachCell(cell => {
@@ -146,11 +147,11 @@ class Neighborhood {
 		this.symbol = symbol || '';
 		// default neighborhoods (not the QG ones)
 		if (desc !== undefined) {
-		
+
 /*
 calc its unique id based on its max radius and encoding rings of nbhds as bitflags
 */
-			
+
 			let m = {};
 			n.forEach(d => {
 				let [x, y] = d;
@@ -161,7 +162,7 @@ calc its unique id based on its max radius and encoding rings of nbhds as bitfla
 				if (!(x in m)) return false;
 				return m[x][y];
 			};
-			
+
 			let maxrad = 0;
 			n.forEach(d => { maxrad = Math.max(maxrad, Math.abs(d[0]), Math.abs(d[1])); });
 			let bitbase = 0;
@@ -183,7 +184,7 @@ calc its unique id based on its max radius and encoding rings of nbhds as bitfla
 				}
 				bitstr = v.toString(16) + bitstr;
 			}
-		
+
 			this.desc = desc;
 			this.input = DOM(
 				'input',
@@ -1055,10 +1056,10 @@ class Cell {
 			});
 		}
 	}
-	
+
 	updateRevealedTileHint() {
 		if (this.hidden) return;
-		
+
 		if (ids.countdown.checked) {
 			this.refreshText();
 		}
@@ -1093,9 +1094,9 @@ class Cell {
 		} else {	// ... display normal
 			this.dom.style.fontWeight = 'normal';
 			this.dom.style.color = '#000000';
-		}	
+		}
 	}
-	
+
 	checkAutoClick() {
 		if (this.hidden) return;
 
@@ -1124,9 +1125,10 @@ class Cell {
 		}
 
 	}
+
 	show(dontChangeUncovered) {
 		if (!this.hidden) return;
-		
+
 		this.refreshText();
 
 		this.hidden = false;
@@ -1137,7 +1139,7 @@ class Cell {
 			grid.refreshUncoveredPercent();
 		}
 	}
-	
+
 	refreshText() {
 		let text = '';
 		this.dom.innerHTML = '';	//this won't do anything bad, right?
@@ -1150,7 +1152,7 @@ class Cell {
 		} else {
 			// revealed empty tile
 		}
-		
+
 		if (ids.countdown.checked) {
 			let flagged = 0;
 			this.nbhdCells.forEach(cell => {
@@ -1162,7 +1164,7 @@ class Cell {
 		if (text != '') {
 			this.dom.appendChild(Text(''+text));
 		}
-		
+
 		this.addNbhdSymbolText();
 	}
 
