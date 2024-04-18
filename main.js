@@ -50,6 +50,14 @@ ids.percentMines.addEventListener('change', changedConfig);
 ids.qgmode.addEventListener('change', changedConfig);
 ids.torus.addEventListener('change', changedConfig);
 
+ids.countdown.addEventListener('change', e => {
+	if (!grid || !grid.clicked) return;
+
+	grid.forEachCell(cell => {
+		if (!cell.hidden) cell.refreshText();
+	});
+});
+
 ids.help.addEventListener('change', e => {
 	if (ids.help.checked) {
 		ids.helpdiv.style.display = 'block';
@@ -928,14 +936,14 @@ const cellIter = function*() {
 };
 
 const neighborNumberColors = [
-	'#C0ECCC',
-	'#E2F0CB',
-	'#B5EAD7',
-	'#C7CEEA',
-	'#A5C8E4',
-	'#F4CDA6',
-	'#FF9AA2',
-	'#F6A8A6',
+	'#c0eccc',
+	'#e2f0cb',
+	'#b5ead7',
+	'#c7ceea',
+	'#a5c8e4',
+	'#f4cda6',
+	'#ff9aa2',
+	'#f6a8a6',
 ];
 
 class Cell {
@@ -1047,8 +1055,14 @@ class Cell {
 			});
 		}
 	}
+	
 	updateRevealedTileHint() {
 		if (this.hidden) return;
+		
+		if (ids.countdown.checked) {
+			this.refreshText();
+		}
+
 		if (!ids.showTileHints.checked) {
 			this.dom.style.color = '#000000';
 			this.dom.style.fontWeight = 'normal';
@@ -1079,8 +1093,9 @@ class Cell {
 		} else {	// ... display normal
 			this.dom.style.fontWeight = 'normal';
 			this.dom.style.color = '#000000';
-		}
+		}	
 	}
+	
 	checkAutoClick() {
 		if (this.hidden) return;
 
@@ -1111,20 +1126,8 @@ class Cell {
 	}
 	show(dontChangeUncovered) {
 		if (!this.hidden) return;
-		let text = '';
-		this.dom.style.backgroundColor = '#dfdfdf';
-		if (this.mine) {
-			text = '*';
-		} else if (this.numTouch > 0) {
-			text = this.numTouch + text;
-			this.dom.style.backgroundColor = neighborNumberColors[(this.numTouch-1)%neighborNumberColors.length];
-		} else {
-			// revealed empty tile
-		}
-		if (text != '') {
-			this.dom.appendChild(Text(''+text));
-		}
-		this.addNbhdSymbolText();
+		
+		this.refreshText();
 
 		this.hidden = false;
 		this.updateRevealedTileHint();
@@ -1134,6 +1137,35 @@ class Cell {
 			grid.refreshUncoveredPercent();
 		}
 	}
+	
+	refreshText() {
+		let text = '';
+		this.dom.innerHTML = '';	//this won't do anything bad, right?
+		this.dom.style.backgroundColor = '#dfdfdf';
+		if (this.mine) {
+			text = '*';
+		} else if (this.numTouch > 0) {
+			text = ''+this.numTouch;
+			this.dom.style.backgroundColor = neighborNumberColors[(this.numTouch-1)%neighborNumberColors.length];
+		} else {
+			// revealed empty tile
+		}
+		
+		if (ids.countdown.checked) {
+			let flagged = 0;
+			this.nbhdCells.forEach(cell => {
+				if (cell.flag == 1) flagged++;
+			});
+			text = ''+(this.numTouch - flagged);
+		}
+
+		if (text != '') {
+			this.dom.appendChild(Text(''+text));
+		}
+		
+		this.addNbhdSymbolText();
+	}
+
 	addNbhdSymbolText() {
 		if (!ids.showcellnbhd.checked) return;
 		if (this.mine) return;
