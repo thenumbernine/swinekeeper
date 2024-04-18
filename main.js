@@ -1,18 +1,18 @@
 let grid;
 
-function posmod(x,y) {
+const posmod = (x,y) => {
 	return ((x % y) + y) % y;
-}
+};
 
-function removeFromParent(o) {
+const removeFromParent = (o) => {
 	o.parentNode.removeChild(o);
-}
+};
 
-function Text(text) {
+const Text = (text) => {
 	return document.createTextNode(text);
-}
+};
 
-function DOM(tag, args, style, listeners) {
+const DOM = (tag, args, style, listeners) => {
 	const dom = document.createElement(tag);
 	if (args) {
 		for (let k in args) {
@@ -30,7 +30,7 @@ function DOM(tag, args, style, listeners) {
 		}
 	}
 	return dom;
-}
+};
 
 const ids = {};
 document.querySelectorAll('[id]').forEach(n => {
@@ -40,9 +40,9 @@ window.ids = ids;
 
 ids.mobileMode.checked = window.ontouchstart !== undefined;
 
-function changedConfig(e) {
+const changedConfig = (e) => {
 	if (!grid.clicked) newgame();
-}
+};
 
 ids.width.addEventListener('change', changedConfig);
 ids.height.addEventListener('change', changedConfig);
@@ -96,7 +96,7 @@ ids.flagUnknown.addEventListener('change', e => {
 });
 
 //https://stackoverflow.com/questions/56300132/how-to-override-css-prefers-color-scheme-setting
-function updateDarkMode() {
+const updateDarkMode = () => {
 	if (ids.darkMode.checked) {
 		document.documentElement.setAttribute('data-theme', 'dark');
 	} else {
@@ -104,8 +104,10 @@ function updateDarkMode() {
 	}
 	let theme = ids.darkMode.checked ? 'dark' : 'light';
 	localStorage.setItem('theme', theme);
-}
+};
+
 ids.darkMode.addEventListener('change', updateDarkMode);
+
 {
 	let darkMode = false;
 	let savedTheme = localStorage.getItem('theme');
@@ -120,15 +122,14 @@ ids.darkMode.addEventListener('change', updateDarkMode);
 	updateDarkMode();
 }
 
-function propagate(f) {
+const propagate = (f) => {
 	let propagationDelay = parseInt(ids.propagationDelay.value);
 	if (!propagationDelay) {
 		f();
 	} else {
 		setTimeout(f, parseInt((Math.random() * .5 + .75) * propagationDelay));
 	}
-}
-
+};
 
 
 class Neighborhood {
@@ -501,7 +502,7 @@ ids.customNbhdAdd.addEventListener('click', e => {
 	nbhds.push(Neighborhood.fromStr(ids.customNbhdStr.value, ids.customNbhdSymbol.value, '', true));
 });
 
-function createRandomNeighborhood(pos) {
+const createRandomNeighborhood = (pos) => {
 	const n = [];
 	//size?
 	//hmm, nbhd size ...
@@ -542,11 +543,11 @@ function createRandomNeighborhood(pos) {
 		}
 	}
 	return new Neighborhood(n);
-}
+};
 
-function pickRandom(ar) {
+const pickRandom = (ar) => {
 	return ar[parseInt(Math.random() * ar.length)];
-}
+};
 
 class Grid {
 	constructor(args) {
@@ -911,7 +912,7 @@ class Grid {
 }
 
 //iterators?
-function* cellIter() {
+const cellIter = function*() {
 	/* how to yield across functions ...
 	grid.cells.forEach((col, i) => {
 		col.forEach((cell, j) => {
@@ -1184,7 +1185,7 @@ class Cell {
 	}
 }
 
-function newgame() {
+const newgame = () => {
 	if (grid) {
 		grid.stopTimer();
 		ids.timeTaken.innerHTML = '...';
@@ -1196,7 +1197,7 @@ function newgame() {
 			parseInt(ids.height.value),
 		],
 	});
-}
+};
 
 ids.newgame.addEventListener('click', newgame);
 
